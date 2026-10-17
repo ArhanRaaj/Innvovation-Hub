@@ -394,11 +394,10 @@ export function detectPromptIntent(prompt: string, isProjectContext = false): Pr
 
   // If chatting inside an existing project laboratory, ALWAYS default to conversational chat
   // unless the engineer explicitly asks to synthesize a brand-new project
-  const isActionChip = /^\[⚡\s*build/i.test(p);
-  const isExplicitNewProject = /^build a new project\b/i.test(p) || /^create a new project\b/i.test(p);
+  const isExplicitNewProject = /^(?:build|create|make|design)\s+(?:a\s+)?(?:new\s+)?(?:hardware\s+)?project\b/i.test(p);
 
   if (isProjectContext) {
-    if (isActionChip || isExplicitNewProject) {
+    if (isExplicitNewProject) {
       return 'synthesis';
     }
     return 'chat';
@@ -407,11 +406,11 @@ export function detectPromptIntent(prompt: string, isProjectContext = false): Pr
   // 1. Explicit project build / creation / synthesis triggers
   const startsWithBuild = /^(build|create|make|design|synthesize|generate|engineer)\b/i.test(p);
   const asksToBuild = /^(can you|please|could you)\s+(build|create|make|design|synthesize|generate)\b/i.test(p);
+  const hardwareBuild = /\b(hardware|electronics|circuit|arduino|esp32|robot|robotics|sensor|microcontroller|firmware|prototype|device|rover|greenhouse|tracker|monitor|automation|servo|motor|ultrasonic|sonar|radar|rfid|solar|weather station|soil|dustbin|car|watch|wearable|doorbell|lo[\s-]?ra|led|wireless|iot)\b/i.test(p);
 
   // Diagnostic / troubleshooting / conversational terms ALWAYS mean chat
   const isQuestionOrTroubleshoot =
-    p.includes('working') ||
-    p.includes('work') ||
+    /\bwork(?:ing)?\b/.test(p) ||
     p.includes('isnt') ||
     p.includes("isn't") ||
     p.includes('doesnt') ||
@@ -439,7 +438,7 @@ export function detectPromptIntent(prompt: string, isProjectContext = false): Pr
     p.startsWith('is ') ||
     p.endsWith('?');
 
-  if ((startsWithBuild || asksToBuild || isActionChip) && !isQuestionOrTroubleshoot) {
+  if ((startsWithBuild || asksToBuild) && hardwareBuild && !isQuestionOrTroubleshoot) {
     return 'synthesis';
   }
 
@@ -480,12 +479,12 @@ export async function generateAIChatResponse(
   history?: { role: string; content: string }[],
   projectContext?: ScienceProject
 ): Promise<ChatResponseResult> {
-  let CHAT_SYSTEM_PROMPT = `You are a helpful, general-purpose AI chat assistant with a strong specialty in electronics, robotics, and science projects.
-Speak like a natural, thoughtful person. Answer the user's actual question directly and match the length and tone of their message. You can discuss everyday topics, explain ideas, brainstorm, write, plan, and help with technical work.
-Do not introduce yourself as an engineer, push hardware topics into unrelated conversations, or turn ordinary chat into a project pitch. Do not show internal reasoning or narrate your process. Ask a follow-up only when it will help.
-For hardware questions, give practical, accurate guidance and flag electrical safety issues. Include code only when it helps answer the question.
-When asked for ideas, provide a varied, thoughtfully selected set that fits the user's request. Avoid repeating the same list across turns. For buildable electronics ideas, include the board and core parts, and add a build action tag like [Build Idea: <Title>].
-If a question is outside your knowledge, be honest and ask what detail would help. Use clean Markdown only when it improves readability.`;
+  let CHAT_SYSTEM_PROMPT = `You are a warm, capable general-purpose chat assistant. Electronics, robotics, and science projects are specialties, not limits.
+Talk with the user naturally, like a helpful person. Respond to what they actually said, match their tone, and keep simple answers short. You can chat about everyday things, explain topics, brainstorm, write, plan, and help with technical work.
+Do not open every reply with a greeting, repeatedly introduce yourself, force hardware into unrelated chats, or end every reply with a generic offer. Do not reveal internal reasoning or describe hidden steps. Ask a follow-up only when information is genuinely needed.
+For technical answers, be practical and precise, explain unfamiliar terms briefly, and call out real electrical safety risks. Include code, tables, and numbered steps only when they make the answer easier to use.
+When asked for ideas, give a varied set that fits the user's constraints and avoid repeating ideas already suggested in this conversation. For buildable electronics ideas, include the board and a few core parts. Make each idea easy to select by using a short bold title. Never add special bracket tags or sales-like calls to action.
+Be honest when unsure. Use light Markdown where it improves readability.`;
 
   if (projectContext) {
     CHAT_SYSTEM_PROMPT += `
@@ -520,42 +519,28 @@ IMPORTANT FOR THIS WORKBENCH:
     const rawReply = await callLLMText(CHAT_SYSTEM_PROMPT, prompt, history);
 
     const suggestions: ChatSuggestion[] = [];
-    const buildRegex = /\[(?:⚡\s*)?Build(?: Idea)?:?\s*([^\]]+)\]/gi;
-    let match;
-    while ((match = buildRegex.exec(rawReply)) !== null) {
-      const cleanName = match[1].trim();
-      if (cleanName && !suggestions.some(s => s.label === cleanName)) {
-        suggestions.push({
-          label: `Build ${cleanName}`,
-          prompt: `Build ${cleanName}`
-        });
-      }
+    const isIdeaRequest = /\b(ideas?|brainstorm|suggestions?)\b/i.test(prompt);
+    const isHardwareIdeaRequest = projectContext || /\b(science fair|hardware|electronics|arduino|esp32|robot|robotics|circuit|sensor|microcontroller|firmware)\b/i.test(prompt);
+
+    if (isIdeaRequest && isHardwareIdeaRequest) {
+      const ideaTitles = [...rawReply.matchAll(/(?:^|\n)\s*(?:[-*]|\d+[.)])\s+\*\*([^*\n]+)\*\*/g)]
+        .map(match => match[1].trim())
+        .filter((title, index, titles) => title && titles.indexOf(title) === index)
+        .slice(0, 6);
+      suggestions.push(...ideaTitles.map(title => ({ label: `Build ${title}`, prompt: `Build a new hardware project: ${title}` })));
     }
 
-    if (suggestions.length === 0) {
-      if (projectContext) {
-        suggestions.push(
-          { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
-          { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
-          { label: '⚡ Power & Decoupling', prompt: 'What are the power supply and voltage requirements?' },
-          { label: '🛠️ Troubleshooting Tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
-        );
-      } else {
-        suggestions.push(
-          { label: 'Brainstorm an idea', prompt: 'Help me brainstorm ideas for a personal project' },
-          { label: 'Explain something', prompt: 'Explain a topic I am curious about in simple terms' },
-          { label: 'Help me write', prompt: 'Help me write or improve something' }
-        );
-      }
+    if (projectContext && suggestions.length === 0) {
+      suggestions.push(
+        { label: 'Explain the wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+        { label: 'Walk through the code', prompt: 'Explain how the firmware code works step by step' },
+        { label: 'Troubleshoot this build', prompt: 'What are common issues and troubleshooting tips for this build?' }
+      );
     }
 
     return {
       reply: rawReply,
-      reasoning: [
-        projectContext ? `Referenced ${projectContext.title} hardware architecture and pinout netlist` : 'Analyzed user context and hardware parameters',
-        'Consulted embedded systems engineering knowledge base',
-        'Synthesized conversational engineering guidance'
-      ],
+      reasoning: [],
       suggestions
     };
   } catch {
@@ -2453,6 +2438,8 @@ interface OfflineProjectIdea {
   category: string;
 }
 
+let previouslySuggestedOfflineIdeas: string[] = [];
+
 function generateOfflineProjectIdeaResponse(rawPrompt: string): ChatResponseResult {
   const ideas: OfflineProjectIdea[] = [
     { title: 'Smart Plant Care Monitor', board: 'ESP32 or Arduino Uno', parts: 'soil moisture probe, light sensor, small display', explores: 'how soil moisture and light affect plant growth', category: 'environment' },
@@ -2486,12 +2473,14 @@ function generateOfflineProjectIdeaResponse(rawPrompt: string): ChatResponseResu
   }
   const requestedCount = Number(rawPrompt.match(/\b(\d{1,2})\s+(?:different\s+)?(?:ideas|projects|topics)\b/i)?.[1]);
   const count = Math.min(8, Math.max(3, requestedCount || 5));
-  const selected = pool.slice(0, count);
-  const reply = `Here are ${selected.length} ideas picked from a mix of topics. I can make them easier, more advanced, or focus on a theme if you like.\n\n${selected.map((idea, index) => `- **${idea.title}** (${idea.board})\n  Uses ${idea.parts}. You could explore ${idea.explores}.\n  [Build Idea: ${idea.title}]`).join('\n\n')}\n\nPick one and I can help turn it into a plan, or I can suggest another set.`;
+  const freshPool = pool.filter(idea => !previouslySuggestedOfflineIdeas.includes(idea.title));
+  const selected = (freshPool.length >= count ? freshPool : pool).slice(0, count);
+  previouslySuggestedOfflineIdeas = selected.map(idea => idea.title);
+  const reply = `Here are ${selected.length} different ideas to consider.\n\n${selected.map(idea => `- **${idea.title}** (${idea.board})\n  Uses ${idea.parts}. You could explore ${idea.explores}.`).join('\n\n')}`;
   return {
     reply,
     reasoning: [],
-    suggestions: selected.map(idea => ({ label: idea.title, prompt: `Build ${idea.title}` }))
+    suggestions: selected.map(idea => ({ label: `Build ${idea.title}`, prompt: `Build a new hardware project: ${idea.title}` }))
   };
 }
 
@@ -2517,25 +2506,16 @@ function generateOfflineChatResponse(
     // 1. Social Greetings in Project Lab
     if (/^(hi|hello|hey|yo|greetings|good\s+(morning|afternoon|evening)|how are you|how r u|sup)\b/i.test(p)) {
       return {
-        reply: `### 👋 Hey! Welcome to the **${projectContext.title}** Lab!
-
-I've got the full hardware workbench open for this project:
-- **Processor**: **${projectContext.board}** (${projectContext.board === 'ESP32' ? '3.3V Logic, 240MHz' : '5V Logic, 16MHz'})
-- **BOM**: ${projectContext.components.length} verified hardware components
-- **Netlist**: ${projectContext.wiringTable.length} conductor pin connections
-- **Firmware**: Verified compilable Arduino C++ sketch
-
-What are you working on or trying to understand about this circuit? Feel free to ask about the wiring, code logic, or troubleshooting!`,
+        reply: `Hi! What would you like to know about ${projectContext.title}? I can help with the wiring, code, or troubleshooting.`,
         reasoning: [
           `Detected greeting in dedicated project laboratory: ${projectContext.title}`,
           'Hydrated project hardware parameters and wiring table',
           'Offered specific engineering assistance for this schematic'
         ],
         suggestions: [
-          { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
-          { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
-          { label: '⚡ Power & Decoupling', prompt: 'What are the power supply and voltage requirements?' },
-          { label: '🛠️ Troubleshooting Tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
+          { label: 'Explain the wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+          { label: 'Walk through the code', prompt: 'Explain how the firmware code works step by step' },
+          { label: 'Troubleshoot this build', prompt: 'What are common issues and troubleshooting tips for this build?' }
         ]
       };
     }

@@ -65,6 +65,7 @@ let currentTargetBoard: 'ESP32' | 'Arduino Uno' = 'ESP32';
 let historySearchQuery: string = '';
 let activeSidebarTab: 'chats' | 'projects' = 'chats';
 let activeMountContainerId: string = 'ai-architect-modal';
+let recentlyShownStarterIds: string[] = [];
 
 export interface StarterPromptItem {
   id: string;
@@ -215,6 +216,52 @@ const HARDWARE_PILLS = [
   'RC522 RFID Reader',
   'DHT22 Temp & Humidity'
 ];
+
+function pickRandomStarterPrompts(): StarterPromptItem[] {
+  const buildablePrompts = STARTER_PROMPTS.filter(item => item.categoryTag !== 'qa');
+  const freshPool = buildablePrompts.filter(item => !recentlyShownStarterIds.includes(item.id));
+  const pool = freshPool.length >= 4 ? freshPool : buildablePrompts;
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const selected = shuffled.slice(0, 4);
+  recentlyShownStarterIds = selected.map(item => item.id);
+  return selected;
+}
+
+function renderStarterIdeasHTML(): string {
+  return `
+    <div class="studio-ideas-heading">
+      <div>
+        <span class="studio-ideas-kicker">START SOMEWHERE</span>
+        <h2>A few ideas to explore</h2>
+      </div>
+      <button class="studio-ideas-refresh" type="button" onclick="window.omniLabStudio.refreshStarterIdeas()" title="Show a different set of ideas">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg>
+        <span>Shuffle ideas</span>
+      </button>
+    </div>
+    <div class="studio-idea-grid">
+      ${pickRandomStarterPrompts().map((item, index) => `
+        <button class="studio-idea-card" type="button" onclick="window.omniLabStudio.selectStarter('Build a new hardware project: ${escapeForAttr(item.title)}. ${escapeForAttr(item.desc)}', true)">
+          <span class="studio-idea-card-top"><span class="studio-idea-index">0${index + 1}</span><span class="studio-idea-board">${escapeHtml(item.boardTag)}</span></span>
+          <span class="studio-idea-title">${escapeHtml(item.title)}</span>
+          <span class="studio-idea-description">${escapeHtml(item.desc)}</span>
+          <span class="studio-idea-action">Explore this idea <span aria-hidden="true">→</span></span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
+
+function closeMobileSidebar(): void {
+  const shell = document.getElementById('ai-studio-shell');
+  if (!shell || window.innerWidth > 760) return;
+  shell.classList.remove('mobile-sidebar-open');
+  document.querySelectorAll<HTMLButtonElement>('.studio-mobile-menu').forEach(button => button.setAttribute('aria-expanded', 'false'));
+}
 
 export function getActiveSession(): ChatSession {
   if (!activeSessionId) {
@@ -437,6 +484,9 @@ function renderWorkspaceHeaderHTML(): string {
     return `
       <header id="studio-workspace-header" style="height:52px; border-bottom:1px solid #222222; background:#0a0a0a; padding:0 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
         <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+          <button class="studio-mobile-menu" type="button" aria-label="Open chat history" aria-controls="ai-studio-history-list" aria-expanded="false" onclick="window.omniLabStudio.toggleSidebar()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
           <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; background:rgba(59, 130, 246, 0.15); color:#60a5fa; padding:3px 8px; border-radius:9999px; border:1px solid rgba(59, 130, 246, 0.3); white-space:nowrap;">Project lab</span>
           <span class="text-sm font-semibold truncate" id="studio-active-title" style="font-size:14px; font-weight:600; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
             ${escapeHtml(active.title)}
@@ -464,6 +514,9 @@ function renderWorkspaceHeaderHTML(): string {
   // General Engineering Chat Header
   return `
     <header id="studio-workspace-header" style="height:52px; border-bottom:1px solid #222222; background:#0a0a0a; padding:0 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+      <button class="studio-mobile-menu" type="button" aria-label="Open chat history" aria-controls="ai-studio-history-list" aria-expanded="false" onclick="window.omniLabStudio.toggleSidebar()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
       <div style="display:flex; align-items:center; gap:8px; cursor:pointer; min-width:0;" onclick="window.omniLabStudio.renamePrompt()" title="Click to rename chat">
         <span class="text-sm font-medium" id="studio-active-title" style="font-size:14px; font-weight:500; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(active.title)}</span>
         <svg style="width:13px; height:13px; color:#666666; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -556,7 +609,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
           <div style="padding:0 2px;">
             <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; background:#161616; border:1px solid #262626;">
               <svg style="width:13px; height:13px; color:#666666; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" placeholder="Find a chat or project" style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:12px; color:#ffffff; padding:0;" oninput="window.omniLabStudio.filterHistory(this.value)" />
+              <input type="search" aria-label="Search conversations and projects" placeholder="Find a chat or project" style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:12px; color:#ffffff; padding:0;" oninput="window.omniLabStudio.filterHistory(this.value)" />
             </div>
           </div>
 
@@ -582,6 +635,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
           </div>
         </div>
       </aside>
+      <button id="studio-sidebar-backdrop" class="studio-sidebar-backdrop" type="button" aria-label="Close chat history" onclick="window.omniLabStudio.toggleSidebar()"></button>
 
       <!-- 2. Central Main Workspace (Full width, right sidebar removed!) -->
       <main class="flex-1 h-full flex flex-col bg-[#0a0a0a] overflow-hidden min-w-0" style="flex:1 1 0%; height:100%; display:flex; flex-direction:column; background:#0a0a0a; overflow:hidden; min-width:0;">
@@ -713,7 +767,7 @@ function renderHistoryItemsHTML(): string {
   const showingChats = activeSidebarTab === 'chats';
   const rows = showingChats ? filteredGeneral : filteredProjects;
   const listHTML = rows.length
-    ? rows.map(s => showingChats ? renderSessionItemHTML(s) : renderProjectSessionItemHTML(s)).join('')
+    ? showingChats ? renderGroupedSessionItems(rows) : rows.map(renderProjectSessionItemHTML).join('')
     : `<div class="studio-sidebar-empty">${q ? 'No matches. Try another search.' : showingChats ? 'Your conversations will appear here.' : 'Your project labs will appear here.'}</div>`;
 
   return `
@@ -728,6 +782,27 @@ function renderHistoryItemsHTML(): string {
     <div class="studio-sidebar-list-label">${showingChats ? 'Recent conversations' : 'Project labs'}</div>
     <div class="studio-sidebar-list" role="tabpanel">${listHTML}</div>
   `;
+}
+
+function renderGroupedSessionItems(rows: ChatSession[]): string {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+  const weekStart = todayStart - 7 * 24 * 60 * 60 * 1000;
+  const groups = new Map<string, ChatSession[]>();
+
+  rows.forEach(session => {
+    const label = session.pinned ? 'Pinned' : session.updatedAt >= todayStart ? 'Today' : session.updatedAt >= yesterdayStart ? 'Yesterday' : session.updatedAt >= weekStart ? 'Previous 7 days' : 'Earlier';
+    groups.set(label, [...(groups.get(label) || []), session]);
+  });
+
+  const order = ['Pinned', 'Today', 'Yesterday', 'Previous 7 days', 'Earlier'];
+  return order.filter(label => groups.has(label)).map(label => `
+    <section class="studio-history-group" aria-label="${label}">
+      <h3 class="studio-history-group-title">${label}</h3>
+      ${groups.get(label)!.map(renderSessionItemHTML).join('')}
+    </section>
+  `).join('');
 }
 
 function renderProjectSessionItemHTML(s: ChatSession): string {
@@ -762,6 +837,7 @@ function renderSessionItemHTML(s: ChatSession): string {
   const isActive = s.id === activeSessionId;
   const msgCount = s.messages.length;
   const boardTag = s.targetBoard === 'ESP32' ? 'ESP32' : 'Uno';
+  const latestUserMessage = [...s.messages].reverse().find(message => message.role === 'user')?.content || 'No messages yet';
 
   return `
     <div 
@@ -769,10 +845,11 @@ function renderSessionItemHTML(s: ChatSession): string {
       onclick="window.omniLabStudio.switchSession('${s.id}')"
       title="${escapeForAttr(s.title)}"
     >
-      <div class="flex items-center space-x-1.5 min-w-0 flex-1" style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
+      <div class="studio-session-copy">
         <span class="studio-session-mark" aria-hidden="true">${s.pinned ? '★' : '•'}</span>
-        <span class="truncate ${isActive ? 'text-white font-medium' : 'text-[#bdc1c6]'}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px;">
-          ${escapeHtml(s.title || 'New chat')}
+        <span class="studio-session-text">
+          <span class="studio-session-title truncate ${isActive ? 'text-white font-medium' : 'text-[#bdc1c6]'}">${escapeHtml(s.title || 'New chat')}</span>
+          <span class="studio-session-preview">${escapeHtml(latestUserMessage)}</span>
         </span>
       </div>
 
@@ -802,63 +879,15 @@ function renderChatStreamHTML(): string {
 
   if (msgs.length === 0) {
     return `
-      <div class="w-full flex-1 flex flex-col items-center justify-center text-center my-auto py-10" style="width:100%; flex:1 1 0%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; margin:auto 0; padding:40px 16px;">
-        <!-- Animated Sparkle Icon -->
-        <div style="width:52px; height:52px; border-radius:16px; background:rgba(59, 130, 246, 0.1); border:1px solid rgba(59, 130, 246, 0.25); display:flex; align-items:center; justify-content:center; margin-bottom:18px; color:#60a5fa;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
-          </svg>
+      <div class="studio-welcome">
+        <div class="studio-welcome-copy">
+          <span class="studio-welcome-kicker">THE INNOVATION HUB</span>
+          <h1>What’s on your mind?</h1>
+          <p>Ask anything, think out loud, or explore a project idea. We can take it one step at a time.</p>
         </div>
-
-        <h1 style="font-size:30px; font-weight:600; color:#ffffff; letter-spacing:-0.02em; margin:0 0 6px 0; font-family:'Google Sans', sans-serif;">What would you like to talk about?</h1>
-        <p style="font-size:14px; color:#a0a0a0; max-width:520px; margin:0 auto 28px auto; line-height:1.5;">
-          Ask a question, explore an idea, get help writing something, or build a project together. Hardware is one of my specialties.
-        </p>
-
-        <!-- Conversation starters -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; width:100%; max-width:680px; text-align:left;">
-          
-          <!-- Card 1: Open conversation -->
-          <div 
-            style="background:#18181b; hover:background:#27272a; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
-            onclick="window.omniLabStudio.selectStarter('Help me brainstorm ideas for a personal project', true)"
-          >
-            <div class="studio-prompt-mark" aria-hidden="true">01</div>
-            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Brainstorm an idea</div>
-            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Explore possibilities for something you want to make or learn.</div>
-          </div>
-
-          <!-- Card 2: Explain a topic -->
-          <div 
-            style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
-            onclick="window.omniLabStudio.selectStarter('Explain a topic I am curious about in simple terms', true)"
-          >
-            <div class="studio-prompt-mark" aria-hidden="true">02</div>
-            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Explain something</div>
-            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Get a clear explanation of a question on your mind.</div>
-          </div>
-
-          <!-- Card 3: Writing help -->
-          <div 
-            style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
-            onclick="window.omniLabStudio.selectStarter('Help me write or improve something', true)"
-          >
-            <div class="studio-prompt-mark" aria-hidden="true">03</div>
-            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Help me write</div>
-            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Draft, edit, or find the right way to say something.</div>
-          </div>
-
-          <!-- Card 4: Hardware guidance -->
-          <div 
-            style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
-            onclick="window.omniLabStudio.selectStarter('I need help with a hardware project', true)"
-          >
-            <div class="studio-prompt-mark" aria-hidden="true">04</div>
-            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Work on a project</div>
-            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Plan a build, choose components, or troubleshoot an issue.</div>
-          </div>
-
-        </div>
+        <section class="studio-ideas-panel" aria-label="Project ideas">
+          ${renderStarterIdeasHTML()}
+        </section>
       </div>
     `;
   }
@@ -892,10 +921,9 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
   // Assistant Response: LIVE SYNTHESIS LOADING STATE
   if (msg.isStreaming) {
     return `
-        <div class="assistant-typing-row" role="status" aria-label="Assistant is responding">
-          <span class="assistant-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          ${msg.isChatThinking ? '' : '<span class="assistant-typing-label">Putting the project together</span>'}
-        </div>
+      <div class="assistant-typing-row" role="status" aria-label="Assistant is responding">
+        <span class="assistant-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="assistant-typing-label">${msg.isChatThinking ? 'Thinking' : 'Putting your build together'}</span>
       </div>
     `;
   }
@@ -921,7 +949,7 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
             <div class="suggestions-label">Suggested next steps</div>
             <div class="suggestions-chips-wrap">
               ${msg.suggestions.map(s => `
-                <button class="suggestion-chip" onclick="window.omniLabStudio.selectStarter('${escapeForAttr(s.prompt)}')">
+                <button class="suggestion-chip" onclick="window.omniLabStudio.selectStarter('${escapeForAttr(s.prompt)}', ${/^Build\s/i.test(s.label)})">
                   <span class="chip-spark" aria-hidden="true">›</span>
                   <span class="chip-text">${escapeHtml(s.label)}</span>
                 </button>
@@ -1058,9 +1086,10 @@ function formatMarkdownToHTML(markdown: string): string {
   if (!markdown) return '';
 
   const codeBlocks: string[] = [];
-  let text = stripStudioEmoji(markdown).replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+  let text = stripStudioEmoji(markdown).replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, rawLang, code) => {
     const idx = codeBlocks.length;
-    codeBlocks.push(`<pre class="code-block-container"><code class="code-block language-${lang || 'cpp'}">${escapeHtml(code.trim())}</code></pre>`);
+    const lang = String(rawLang || 'code').toLowerCase();
+    codeBlocks.push(`<div class="assistant-code-block"><div class="assistant-code-toolbar"><span>${escapeHtml(lang)}</span><button type="button" onclick="window.omniLabStudio.copyCodeBlock(this)">Copy</button></div><pre class="code-block-container"><code class="code-block language-${lang}">${escapeHtml(code.trim())}</code></pre></div>`);
     return `%%CODEBLOCK_${idx}%%`;
   });
 
@@ -1142,8 +1171,10 @@ declare global {
       startNewBuild: () => void;
       clearChat: () => void;
       toggleThought: (msgId: string) => void;
+      refreshStarterIdeas: () => void;
       inspectProject: (projectId: string) => void;
       inspectActiveProject: () => void;
+      copyCodeBlock: (button: HTMLButtonElement) => Promise<void>;
       copyCode: (projectId: string) => void;
       copyLatestCode: () => void;
       renamePrompt: () => void;
@@ -1423,6 +1454,13 @@ export function registerOmniLabStudioGlobals(
       }
     },
 
+    refreshStarterIdeas: () => {
+      const stream = document.getElementById('ai-studio-chat-stream');
+      if (stream && getActiveSession().messages.length === 0) {
+        stream.innerHTML = renderChatStreamHTML();
+      }
+    },
+
     insertPill: (pillText: string) => {
       const input = document.getElementById('ai-studio-input') as HTMLTextAreaElement | HTMLInputElement | null;
       if (input) {
@@ -1555,6 +1593,8 @@ export function registerOmniLabStudioGlobals(
     // ANTIGRAVITY MULTI-CHAT & FOLDER ARCHITECTURE MANAGEMENT
     // ========================================================================
     createNewChat: (folderId?: string) => {
+      closeMobileSidebar();
+      historySearchQuery = '';
       const newSession: ChatSession = {
         id: 'session-' + Date.now(),
         title: 'New chat',
@@ -1583,6 +1623,8 @@ export function registerOmniLabStudioGlobals(
       if (historyList) {
         historyList.innerHTML = renderHistoryItemsHTML();
       }
+      const historySearch = document.querySelector<HTMLInputElement>('#ai-studio-shell > aside input[type="search"]');
+      if (historySearch) historySearch.value = '';
       const titleEl = document.getElementById('studio-active-title');
       if (titleEl) {
         titleEl.textContent = newSession.title;
@@ -1606,6 +1648,7 @@ export function registerOmniLabStudioGlobals(
     switchSession: (sessionId: string) => {
       const target = chatSessions.find(s => s.id === sessionId);
       if (!target) return;
+      closeMobileSidebar();
       activeSessionId = target.id;
       activeSidebarTab = target.projectId ? 'projects' : 'chats';
       studioMessages = target.messages;
@@ -1924,9 +1967,29 @@ export function registerOmniLabStudioGlobals(
       }
     },
 
+    copyCodeBlock: async (button: HTMLButtonElement) => {
+      const code = button.closest('.assistant-code-block')?.querySelector('code')?.textContent;
+      if (!code) return;
+      try {
+        await navigator.clipboard.writeText(code);
+        const original = button.textContent;
+        button.textContent = 'Copied';
+        window.setTimeout(() => { button.textContent = original || 'Copy'; }, 1400);
+      } catch {
+        showToast('Could not copy code. Select it and copy manually.');
+      }
+    },
+
     toggleSidebar: () => {
       const shell = document.getElementById('ai-studio-shell');
-      shell?.classList.toggle('sidebar-collapsed');
+      if (!shell) return;
+      if (window.innerWidth <= 760) {
+        shell.classList.remove('sidebar-collapsed');
+        const isOpen = shell.classList.toggle('mobile-sidebar-open');
+        document.querySelectorAll<HTMLButtonElement>('.studio-mobile-menu').forEach(button => button.setAttribute('aria-expanded', String(isOpen)));
+      } else {
+        shell.classList.toggle('sidebar-collapsed');
+      }
     },
 
     toggleFullscreen: () => {
