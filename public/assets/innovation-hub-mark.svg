@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="blue" x1="9" y1="15" x2="112" y2="102" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#147BFF"/>
+      <stop offset="1" stop-color="#0755D9"/>
+    </linearGradient>
+    <linearGradient id="navy" x1="35" y1="9" x2="82" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123B79"/>
+      <stop offset="1" stop-color="#071D43"/>
+    </linearGradient>
+  </defs>
+  <g stroke="url(#blue)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
+    <path d="M27 40H20L14 34"/><path d="M27 60H15"/><path d="M27 80H20L14 86"/>
+    <path d="M93 40h7l6-6"/><path d="M93 60h12"/><path d="M93 80h7l6 6"/>
+    <circle cx="10" cy="30" r="6"/><circle cx="10" cy="60" r="6"/><circle cx="10" cy="90" r="6"/>
+    <circle cx="110" cy="30" r="6"/><circle cx="110" cy="60" r="6"/><circle cx="110" cy="90" r="6"/>
+  </g>
+  <path d="M32 34V25a12 12 0 0 1 12-12h32a12 12 0 0 1 12 12v9M88 86v9a12 12 0 0 1-12 12H44a12 12 0 0 1-12-12v-9" stroke="url(#navy)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M43 36h5a7 7 0 0 1 7 7v34a7 7 0 0 1-7 7h-5V36Z" fill="url(#navy)"/>
+  <path d="M72 36h5v48h-5a7 7 0 0 1-7-7V43a7 7 0 0 1 7-7Z" fill="url(#navy)"/>
+  <circle cx="60" cy="35" r="7" fill="url(#blue)"/>
+  <path d="M54 52h12a4 4 0 0 1 4 4v24a4 4 0 0 1-4 4H54a4 4 0 0 1-4-4V56a4 4 0 0 1 4-4Z" fill="url(#blue)"/>
+</svg>

@@ -532,8 +532,8 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
         <div class="flex flex-col flex-1 min-h-0" style="display:flex; flex-direction:column; flex:1; min-height:0; gap:12px;">
           <!-- Clean Brand Logo Area -->
           <div style="display:flex; align-items:center; gap:10px; padding:6px 8px; cursor:pointer;" onclick="window.omniLabStudio.createNewChat()">
-            <div style="width:30px; height:30px; border-radius:8px; background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.3); display:flex; align-items:center; justify-content:center; color:#60a5fa; flex-shrink:0;">
-              <span aria-hidden="true" style="font-size:16px;">✳</span>
+            <div style="width:38px; height:38px; border-radius:11px; background:#eaf2ff; border:1px solid #d8e6ff; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden;">
+              <img src="/assets/innovation-hub-mark.svg" alt="" width="36" height="36" style="display:block; object-fit:contain;" />
             </div>
             <div style="display:flex; flex-direction:column; line-height:1.2;">
               <span style="font-size:14px; font-weight:600; color:#ffffff;">The Innovation Hub</span>
