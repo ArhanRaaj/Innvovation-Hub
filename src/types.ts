@@ -40,6 +40,15 @@ export interface CircuitDiagramData {
   modules: CircuitModulePinout[];
 }
 
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role?: string;
+  createdAt: number;
+}
+
 export interface ScienceProject {
   id: string;
   title: string;
@@ -58,6 +67,9 @@ export interface ScienceProject {
   code: string;
   assemblySteps: string[];
   scientificApplications: string;
+  userId?: string;
+  authorName?: string;
+  createdAt?: number;
 }
 
 export interface FilterState {
@@ -74,6 +86,7 @@ export interface FilterState {
   activeModalProjectId: string | null;
   activeModalTab: string;
   viewLayout?: 'grid' | 'table';
+  accountScope?: 'all' | 'curated' | 'my-projects';
 }
 
 export interface Point2D {

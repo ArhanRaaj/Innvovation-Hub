@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { ScienceProject } from '../types.ts';
 
-const SUPABASE_URL = 'https://pzitspclrudmaothdzzx.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6aXRzcGNscnVkbWFvdGhkenp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNTkwOTksImV4cCI6MjEwNzczNTA5OX0.ESP_2bMrC2djbfgyLx_YHRYTbQLXJeRtQ7waPOBvAGU';
+const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://pzitspclrudmaothdzzx.supabase.co';
+const SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6aXRzcGNscnVkbWFvdGhkenp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNTkwOTksImV4cCI6MjEwNzczNTA5OX0.ESP_2bMrC2djbfgyLx_YHRYTbQLXJeRtQ7waPOBvAGU';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

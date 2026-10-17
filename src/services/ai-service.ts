@@ -31,8 +31,21 @@ const DEFAULT_OPENROUTER_KEYS: string[] = [];
 
 export function getAISettings(): AIServiceConfig {
   const ls = typeof localStorage !== 'undefined' ? localStorage : null;
-  const provider = (ls?.getItem('ai_provider') as AIProvider) || 'auto';
-  const customKey = ls?.getItem('ai_api_key') || '';
+  const env = (import.meta as any).env || {};
+  const envGeminiKey = env.VITE_GEMINI_API_KEY || '';
+  const envGroqKey = env.VITE_GROQ_API_KEY || '';
+  const envOpenRouterKey = env.VITE_OPENROUTER_API_KEY || '';
+
+  const savedProvider = ls?.getItem('ai_provider') as AIProvider;
+  const customKey = ls?.getItem('ai_api_key') || envGeminiKey || envGroqKey || envOpenRouterKey || '';
+  
+  let provider = savedProvider || 'auto';
+  if (!savedProvider && envGeminiKey) {
+    provider = 'gemini';
+  } else if (!savedProvider && envGroqKey) {
+    provider = 'groq';
+  }
+
   const model = ls?.getItem('ai_model') || '';
 
   return {

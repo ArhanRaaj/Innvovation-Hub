@@ -15,6 +15,7 @@ import {
   saveAISettings,
   AIProvider
 } from '../services/ai-service.ts';
+import { authService, DEMO_USER } from '../services/auth-service.ts';
 import { openProjectModal } from './modal.ts';
 
 export interface StudioMessage {
@@ -254,39 +255,51 @@ export function getActiveSession(): ChatSession {
 
 export function saveStudioState(): void {
   try {
-    localStorage.setItem('omnilab_studio_sessions', JSON.stringify(chatSessions));
-    localStorage.setItem('omnilab_studio_folders', JSON.stringify(studioFolders));
+    const user = authService.getCurrentUser();
+    const uid = user ? user.id : 'guest';
+    authService.saveUserSessions(chatSessions, uid);
+    authService.saveUserFolders(studioFolders, uid);
     const active = getActiveSession();
     studioMessages = active.messages;
-    localStorage.setItem('omnilab_studio_messages', JSON.stringify(studioMessages.slice(-50)));
   } catch (e) {
     console.error('Error saving studio state:', e);
   }
 }
 
 export function initAIStudio(): void {
+  const user = authService.getCurrentUser();
+  const uid = user ? user.id : 'guest';
+
+  // 1. Load user-specific folders
   try {
-    const savedFolders = localStorage.getItem('omnilab_studio_folders');
-    if (savedFolders) {
-      studioFolders = JSON.parse(savedFolders);
-    } else {
-      studioFolders = [
+    let savedFolders = authService.getUserFolders(uid);
+    if (!savedFolders || savedFolders.length === 0) {
+      savedFolders = [
         { id: 'folder-robotics', name: 'Robotics Lab', createdAt: Date.now(), isExpanded: true },
         { id: 'folder-iot', name: 'IoT & Sensor Nodes', createdAt: Date.now(), isExpanded: true },
         { id: 'folder-sciencefair', name: 'Science Fair 2026', createdAt: Date.now(), isExpanded: true }
       ];
-      try {
-        localStorage.setItem('omnilab_studio_folders', JSON.stringify(studioFolders));
-      } catch {}
+      authService.saveUserFolders(savedFolders, uid);
     }
+    studioFolders = savedFolders;
   } catch {
     studioFolders = [];
   }
 
+  // 2. Load user-specific sessions (strictly isolated per user!)
   try {
-    const savedSessions = localStorage.getItem('omnilab_studio_sessions');
-    if (savedSessions) {
-      chatSessions = JSON.parse(savedSessions);
+    let savedSessions = authService.getUserSessions(uid);
+
+    // If new user or no sessions yet, check if demo founder account has initial legacy sessions
+    if ((!savedSessions || savedSessions.length === 0) && uid === DEMO_USER.id) {
+      try {
+        const leg = localStorage.getItem('omnilab_studio_sessions');
+        if (leg) savedSessions = JSON.parse(leg);
+      } catch {}
+    }
+
+    if (savedSessions && savedSessions.length > 0) {
+      chatSessions = savedSessions;
       // Clean up any test/dummy synthesized projects
       chatSessions = chatSessions.filter(s => {
         const titleL = s.title?.toLowerCase() || '';
@@ -304,31 +317,11 @@ export function initAIStudio(): void {
           return true;
         });
       });
+    } else {
+      chatSessions = [];
     }
   } catch {
     chatSessions = [];
-  }
-
-  // Legacy migration if no sessions
-  if (chatSessions.length === 0) {
-    try {
-      const saved = localStorage.getItem('omnilab_studio_messages');
-      if (saved) {
-        const msgs: StudioMessage[] = JSON.parse(saved);
-        if (msgs.length > 0) {
-          const firstProj = msgs.find(m => m.project)?.project;
-          chatSessions.push({
-            id: 'session-legacy',
-            title: firstProj?.title || 'Emotion Desk Robot',
-            folderId: 'folder-robotics',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            targetBoard: (firstProj?.board as any) || 'ESP32',
-            messages: msgs
-          });
-        }
-      }
-    } catch {}
   }
 
   // Ensure default session if still empty
@@ -349,8 +342,15 @@ export function initAIStudio(): void {
 }
 
 export function getAllStudioProjects(): ScienceProject[] {
-  const projs: ScienceProject[] = [];
-  const seenIds = new Set<string>();
+  const user = authService.getCurrentUser();
+  const uid = user ? user.id : 'guest';
+
+  // 1. Projects stored in active user account
+  const accountProjects = authService.getUserProjects(uid);
+
+  // 2. Projects synthesized in active session messages
+  const projs: ScienceProject[] = [...accountProjects];
+  const seenIds = new Set<string>(accountProjects.map(p => p.id));
 
   chatSessions.forEach(session => {
     session.messages.forEach(m => {
@@ -365,6 +365,12 @@ export function getAllStudioProjects(): ScienceProject[] {
 }
 
 export function getStudioProjectById(id: string): ScienceProject | undefined {
+  const user = authService.getCurrentUser();
+  const uid = user ? user.id : 'guest';
+  const accountProjects = authService.getUserProjects(uid);
+  const foundInAccount = accountProjects.find(p => p.id === id);
+  if (foundInAccount) return foundInAccount;
+
   for (const session of chatSessions) {
     for (const m of session.messages) {
       if (m.project && m.project.id === id) return m.project;
@@ -382,6 +388,9 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
   const settings = getAISettings();
   const currentProvider = settings.provider || 'auto';
   const savedProjectCount = studioMessages.filter(m => m.project).length;
+  const currentUser = authService.getCurrentUser();
+  const userInitial = currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+  const userTitle = currentUser ? `${currentUser.name} (${currentUser.email}) - Account Profile` : 'Sign In';
 
   modal.innerHTML = `
     <!-- Main Google AI Studio Application Wrapper -->
@@ -508,8 +517,8 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
               <span id="studio-compare-text">Compare (${currentTargetBoard})</span>
             </button>
             <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer text-base" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:16px;" onclick="window.omniLabStudio.startNewBuild()" title="Start New Session">⋮</button>
-            <!-- Blue User Avatar Circle with Initial 'A' -->
-            <div class="w-7 h-7 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white flex items-center justify-center font-semibold text-xs cursor-pointer transition-colors" style="width:28px; height:28px; border-radius:50%; background:#1a73e8; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px;" title="User Profile" onclick="window.omniLabStudio.showAuthorInfo()">A</div>
+            <!-- Dynamic User Avatar Button -->
+            <div id="studio-header-avatar-btn" class="w-7 h-7 rounded-full bg-[#0284c7] hover:bg-[#00f2fe] hover:text-black text-white flex items-center justify-center font-semibold text-xs cursor-pointer transition-colors shadow-sm" style="width:28px; height:28px; border-radius:50%; background:#0284c7; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; cursor:pointer;" title="${userTitle}" onclick="window.omniLabStudio.showAuthorInfo()">${userInitial}</div>
             <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer ml-1 text-lg leading-none" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:18px;" onclick="if(window.omniLab?.closeAIArchitectModal && !window.location.pathname.includes('studio.html')){window.omniLab.closeAIArchitectModal();}else{window.location.href='projects.html';}" title="Exit Studio">&times;</button>
           </div>
         </header>
@@ -1524,13 +1533,18 @@ export function registerOmniLabStudioGlobals(
         await new Promise(res => setTimeout(res, 350));
         assistantMsg.isStreaming = false;
 
-        // Add to main projects store
-        projectsData.unshift(newProject);
+        // Save strictly to active user's account repository
+        const activeUser = authService.getCurrentUser();
+        authService.saveUserProject(newProject, activeUser?.id);
+
+        if (!projectsData.some(p => p.id === newProject.id)) {
+          projectsData.unshift(newProject);
+        }
         state.bookmarkedIds.add(newProject.id);
         localStorage.setItem('lab_bookmarks', JSON.stringify([...state.bookmarkedIds]));
         onProjectsUpdated();
 
-        // Persist session architecture
+        // Persist session architecture for active user
         saveStudioState();
 
         // Update history sidebar
@@ -1638,7 +1652,11 @@ export function registerOmniLabStudioGlobals(
     },
 
     showAuthorInfo: () => {
-      showToast('The Innovation Hub Account • Pro Workspace');
+      if ((window as any).innovationHubAuth) {
+        (window as any).innovationHubAuth.openAuthModal('profile');
+      } else {
+        showToast('The Innovation Hub • Hardware Engineering Workspace');
+      }
     },
 
     triggerRealtimeStream: () => {

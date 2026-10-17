@@ -49,6 +49,8 @@ import {
   getAllStudioProjects,
   getStudioProjectById
 } from './ui/ai-studio.ts';
+import { initAuthUI } from './ui/auth-modal.ts';
+import { authService } from './services/auth-service.ts';
 
 
 // ----------------------------------------------------------------------------
@@ -66,7 +68,8 @@ const state: FilterState = {
   circuitViewMode: 'real',
   wireFilter: 'all',
   activeModalProjectId: null,
-  activeModalTab: 'tab-circuit'
+  activeModalTab: 'tab-circuit',
+  accountScope: 'curated'
 };
 
 // Global OmniLab API for HTML onclick attributes & toolbar handlers
@@ -100,6 +103,10 @@ declare global {
       setLayoutView: (mode: 'grid' | 'table') => void;
       toggleSavedFilter: () => void;
       runFilterSync: () => void;
+      deleteUserProject: (id: string) => void;
+    };
+    omniLabScope?: {
+      setScope: (scope: 'all' | 'curated' | 'my-projects') => void;
     };
   }
 }
@@ -112,6 +119,40 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initOmniLab(): void {
+  // Initialize Auth System (Modal, Profile Dropdown, Navbar Pill)
+  initAuthUI();
+
+  // Check URL query parameters for scope
+  const urlParams = new URLSearchParams(window.location.search);
+  const requestedScope = urlParams.get('scope') || urlParams.get('tab');
+  if (requestedScope === 'my-projects') {
+    state.accountScope = 'my-projects';
+  } else if (requestedScope === 'curated') {
+    state.accountScope = 'curated';
+  } else if (requestedScope === 'all') {
+    state.accountScope = 'all';
+  }
+
+  // Bind Scope Switcher Controller
+  window.omniLabScope = {
+    setScope: (scope: 'all' | 'curated' | 'my-projects') => {
+      state.accountScope = scope;
+      document.querySelectorAll('.scope-segment-btn').forEach(b => {
+        b.classList.remove('active');
+      });
+      const activeBtn = document.getElementById(`scope-btn-${scope}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      syncDynamicCounts(PROJECTS_DATA);
+      filterAndRender(PROJECTS_DATA, state);
+    }
+  };
+
+  // Sync state whenever user logs in or out
+  authService.onAuthStateChanged(() => {
+    syncDynamicCounts(PROJECTS_DATA);
+    filterAndRender(PROJECTS_DATA, state);
+  });
+
   // Ensure curated repository stays pristine
   try {
     const savedSessions = localStorage.getItem('omnilab_studio_sessions');
@@ -324,6 +365,16 @@ function initOmniLab(): void {
     },
     runFilterSync: () => {
       filterAndRender(PROJECTS_DATA, state);
+    },
+    deleteUserProject: (id: string) => {
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser) return;
+      const removed = authService.deleteUserProject(id, currentUser.id);
+      if (removed) {
+        showToast('Deleted project from your account.');
+        syncDynamicCounts(PROJECTS_DATA);
+        filterAndRender(PROJECTS_DATA, state);
+      }
     },
 
     // AI Functions (Antigravity & ChatGPT Studio Engine)
