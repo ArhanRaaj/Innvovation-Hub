@@ -15,7 +15,7 @@ import {
   saveAISettings,
   AIProvider
 } from '../services/ai-service.ts';
-import { authService, DEMO_USER } from '../services/auth-service.ts';
+import { authService } from '../services/auth-service.ts';
 import { openProjectModal } from './modal.ts';
 
 export interface StudioMessage {
@@ -286,17 +286,9 @@ export function initAIStudio(): void {
     studioFolders = [];
   }
 
-  // 2. Load user-specific sessions (strictly isolated per user!)
+  // 2. Load user-specific sessions (strictly isolated per user from Supabase!)
   try {
     let savedSessions = authService.getUserSessions(uid);
-
-    // If new user or no sessions yet, check if demo founder account has initial legacy sessions
-    if ((!savedSessions || savedSessions.length === 0) && uid === DEMO_USER.id) {
-      try {
-        const leg = localStorage.getItem('omnilab_studio_sessions');
-        if (leg) savedSessions = JSON.parse(leg);
-      } catch {}
-    }
 
     if (savedSessions && savedSessions.length > 0) {
       chatSessions = savedSessions;
@@ -391,6 +383,36 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
   const currentUser = authService.getCurrentUser();
   const userInitial = currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
   const userTitle = currentUser ? `${currentUser.name} (${currentUser.email}) - Account Profile` : 'Sign In';
+
+  if (!currentUser) {
+    modal.innerHTML = `
+      <div class="google-ai-studio flex h-screen w-full bg-[#090A0F] text-[#e8eaed] items-center justify-center p-6 select-none" id="ai-studio-shell" style="display:flex; height:100vh; width:100%; background:#090A0F; align-items:center; justify-content:center; box-sizing:border-box;">
+        <div class="max-w-md w-full bg-[#13141B] border border-white/10 rounded-2xl p-8 text-center shadow-2xl flex flex-col items-center" style="max-width:440px; width:100%; background:#13141B; border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:36px; text-align:center; box-sizing:border-box;">
+          <div class="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center mb-5 text-cyan-400" style="width:64px; height:64px; border-radius:50%; background:rgba(0, 242, 254, 0.1); border:1px solid rgba(0, 242, 254, 0.3); display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#00f2fe;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <span class="text-xs uppercase tracking-widest font-mono text-cyan-400 font-bold mb-2" style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:#00f2fe; font-weight:700; margin-bottom:8px; display:block;">THE INNOVATION HUB &bull; AI HARDWARE STUDIO</span>
+          <h2 class="text-2xl font-bold text-white mb-2" style="color:#ffffff; font-size:24px; font-weight:700; margin-bottom:8px;">Sign In to Use AI Studio</h2>
+          <p class="text-sm text-gray-400 mb-6 leading-relaxed" style="color:#94a3b8; font-size:14px; line-height:1.5; margin-bottom:24px;">Please log in to your engineer account to start designing custom hardware architectures, interactive schematics, and compiling C++ firmware.</p>
+          <div class="flex flex-col gap-3 w-full" style="display:flex; flex-direction:column; gap:12px; width:100%;">
+            <button onclick="window.innovationHubAuth.openAuthModal('signin')" class="w-full py-3 px-4 bg-white hover:bg-cyan-400 text-black font-semibold rounded-xl transition-all cursor-pointer shadow-lg" style="width:100%; padding:12px 16px; background:#ffffff; color:#000000; font-weight:600; border-radius:12px; border:none; cursor:pointer;">
+              Sign In to Your Account &rarr;
+            </button>
+            <button onclick="window.innovationHubAuth.openAuthModal('register')" class="w-full py-3 px-4 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl border border-white/10 transition-all cursor-pointer" style="width:100%; padding:12px 16px; background:rgba(255,255,255,0.05); color:#ffffff; font-weight:500; border-radius:12px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">
+              Create Free Account
+            </button>
+          </div>
+          <div class="mt-6 pt-4 border-t border-white/5 w-full flex justify-center" style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08); width:100%; display:flex; justify-content:center;">
+            <a href="index.html" class="text-xs text-gray-400 hover:text-white" style="font-size:12px; color:#94a3b8; text-decoration:none;">&larr; Return to Home</a>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
 
   modal.innerHTML = `
     <!-- Main Google AI Studio Application Wrapper -->

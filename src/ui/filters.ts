@@ -164,34 +164,34 @@ export function renderProjectsGrid(
       const emptyDesc = emptyState.querySelector('.empty-state-desc');
       const emptyActions = emptyState.querySelector('.empty-state-actions');
 
-      if (state.accountScope === 'my-projects') {
-        if (!currentUser) {
-          if (emptyTitle) emptyTitle.textContent = 'Account Sign In Required';
-          if (emptyDesc) emptyDesc.textContent = 'Sign in to access and manage the custom hardware projects created with your account.';
-          if (emptyActions) {
-            emptyActions.innerHTML = `
-              <button class="empty-ai-btn" onclick="window.innovationHubAuth.openAuthModal('signin')">Sign In / Register</button>
-            `;
-          }
-        } else {
-          if (emptyTitle) emptyTitle.textContent = `No Projects Created Yet for ${currentUser.name}`;
-          if (emptyDesc) emptyDesc.textContent = `You have not built any hardware projects with this account yet. Launch AI Studio to design and synthesize your first custom circuit!`;
-          if (emptyActions) {
-            emptyActions.innerHTML = `
-              <button class="empty-ai-btn" onclick="window.omniLab.openAIArchitectModal()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
-                + Build New Project with AI
-              </button>
-            `;
-          }
+      const totalUserProjects = currentUser ? authService.getUserProjects(currentUser.id).length : 0;
+
+      if (!currentUser) {
+        if (emptyTitle) emptyTitle.textContent = 'Account Sign In Required';
+        if (emptyDesc) emptyDesc.textContent = 'Sign in to access and manage the custom hardware projects created with your account.';
+        if (emptyActions) {
+          emptyActions.innerHTML = `
+            <button class="empty-ai-btn" onclick="window.innovationHubAuth.openAuthModal('signin')">Sign In / Register</button>
+          `;
+        }
+      } else if (totalUserProjects === 0) {
+        if (emptyTitle) emptyTitle.textContent = 'No Projects Created Yet';
+        if (emptyDesc) emptyDesc.textContent = `Welcome, ${currentUser.name}! You haven't created any hardware projects with your account yet. Launch AI Studio to design and synthesize your first custom circuit!`;
+        if (emptyActions) {
+          emptyActions.innerHTML = `
+            <button class="empty-ai-btn" onclick="window.location.href='studio.html'">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+              + Build Project with AI Studio
+            </button>
+          `;
         }
       } else {
-        if (emptyTitle) emptyTitle.textContent = 'No Matching Science Projects Found';
+        if (emptyTitle) emptyTitle.textContent = 'No Matching Projects Found';
         if (emptyDesc) emptyDesc.textContent = 'No hardware projects matched your current search filters. Try adjusting keywords, changing board selection, or generate a custom build with the AI Architect.';
         if (emptyActions) {
           emptyActions.innerHTML = `
             <button class="empty-reset-btn" onclick="window.omniLab.resetFilters()">Reset All Filters</button>
-            <button class="empty-ai-btn" onclick="window.omniLab.openAIArchitectModal()">
+            <button class="empty-ai-btn" onclick="window.location.href='studio.html'">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/>
               </svg>
@@ -556,24 +556,33 @@ export function filterAndRender(
   state: FilterState
 ): void {
   const currentUser = authService.getCurrentUser();
-  const userProjects = currentUser ? authService.getUserProjects(currentUser.id) : [];
+  const lockGate = document.getElementById('projects-auth-gate');
+  const controlHub = document.getElementById('control-hub');
+  const grid = document.getElementById('projects-grid');
+  const tableView = document.getElementById('projects-table-view');
+  const emptyState = document.getElementById('empty-state');
+  const telemetry = document.querySelector('.projects-telemetry-strip') as HTMLElement | null;
 
-  let list: ScienceProject[];
-  if (state.accountScope === 'my-projects') {
-    // Strictly ONLY projects created with their account!
-    list = [...userProjects];
-  } else if (state.accountScope === 'curated') {
-    // Curated benchmark labs only
-    list = allProjects.filter(p => !p.userId);
-  } else {
-    // All projects: curated labs + this user's created projects
-    list = [...allProjects];
-    for (const up of userProjects) {
-      if (!list.some(p => p.id === up.id)) {
-        list.unshift(up);
-      }
-    }
+  // If visitor is not logged in: show lock gate ONLY!
+  if (!currentUser) {
+    if (lockGate) lockGate.style.display = 'block';
+    if (controlHub) controlHub.style.display = 'none';
+    if (grid) grid.innerHTML = '';
+    if (tableView) tableView.innerHTML = '';
+    if (emptyState) emptyState.style.display = 'none';
+    if (telemetry) telemetry.style.display = 'none';
+    const countEl = document.getElementById('filtered-count');
+    if (countEl) countEl.textContent = '0';
+    return;
   }
+
+  // User is logged in: show repository and ONLY projects created with their account!
+  if (lockGate) lockGate.style.display = 'none';
+  if (controlHub) controlHub.style.display = 'block';
+  if (telemetry) telemetry.style.display = 'flex';
+
+  const userProjects = authService.getUserProjects(currentUser.id);
+  let list: ScienceProject[] = [...userProjects];
 
   // Board Filter
   if (state.currentBoard !== 'all') {
@@ -630,11 +639,14 @@ export function renderCategoryChips(
   const mount = document.getElementById('category-chips');
   if (!mount) return;
 
+  const currentUser = authService.getCurrentUser();
+  const activeProjects = currentUser ? authService.getUserProjects(currentUser.id) : [];
+
   mount.innerHTML = CATEGORIES.map(cat => {
     const isActive = state.currentCategory === cat;
     const count = cat === 'All Categories'
-      ? allProjects.length
-      : allProjects.filter(p => p.category === cat).length;
+      ? activeProjects.length
+      : activeProjects.filter(p => p.category === cat).length;
 
     return `
       <button class="cat-chip ${isActive ? 'active' : ''}" data-category="${cat}">
@@ -653,10 +665,12 @@ export function renderCategoryChips(
   });
 }
 
-export function syncDynamicCounts(allProjects: ScienceProject[]): void {
-  const total = allProjects.length;
-  const uno = allProjects.filter(p => p.board.toLowerCase().includes('arduino')).length;
-  const esp = allProjects.filter(p => p.board.toLowerCase().includes('esp32')).length;
+export function syncDynamicCounts(_allProjects: ScienceProject[]): void {
+  const currentUser = authService.getCurrentUser();
+  const activeProjects = currentUser ? authService.getUserProjects(currentUser.id) : [];
+  const total = activeProjects.length;
+  const uno = activeProjects.filter(p => p.board.toLowerCase().includes('arduino')).length;
+  const esp = activeProjects.filter(p => p.board.toLowerCase().includes('esp32')).length;
 
   const statTotal = document.getElementById('stat-total-count');
   const statUno = document.getElementById('stat-uno-count');
@@ -664,14 +678,6 @@ export function syncDynamicCounts(allProjects: ScienceProject[]): void {
   const badgeAll = document.getElementById('badge-all-count');
   const badgeUno = document.getElementById('badge-uno-count');
   const badgeEsp = document.getElementById('badge-esp-count');
-
-  const currentUser = authService.getCurrentUser();
-  const userProjects = currentUser ? authService.getUserProjects(currentUser.id) : [];
-  const scopeCurated = document.getElementById('scope-curated-count');
-  const scopeMy = document.getElementById('scope-my-count');
-
-  if (scopeCurated) scopeCurated.textContent = allProjects.filter(p => !p.userId).length.toString();
-  if (scopeMy) scopeMy.textContent = userProjects.length.toString();
 
   if (statTotal) statTotal.textContent = total.toString();
   if (statUno) statUno.textContent = uno.toString();

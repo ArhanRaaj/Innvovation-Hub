@@ -366,10 +366,10 @@ function initOmniLab(): void {
     runFilterSync: () => {
       filterAndRender(PROJECTS_DATA, state);
     },
-    deleteUserProject: (id: string) => {
+    deleteUserProject: async (id: string) => {
       const currentUser = authService.getCurrentUser();
       if (!currentUser) return;
-      const removed = authService.deleteUserProject(id, currentUser.id);
+      const removed = await authService.deleteUserProject(id, currentUser.id);
       if (removed) {
         showToast('Deleted project from your account.');
         syncDynamicCounts(PROJECTS_DATA);

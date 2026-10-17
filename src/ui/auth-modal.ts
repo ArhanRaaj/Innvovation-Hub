@@ -15,7 +15,6 @@ declare global {
       switchTab: (tab: 'signin' | 'register' | 'profile') => void;
       handleLogin: (e: Event) => void;
       handleRegister: (e: Event) => void;
-      loginDemo: () => void;
       logout: () => void;
       toggleProfileDropdown: (e?: Event) => void;
       closeProfileDropdown: () => void;
@@ -55,11 +54,6 @@ export function initAuthUI(): void {
     switchTab,
     handleLogin,
     handleRegister,
-    loginDemo: () => {
-      authService.loginAsDemo();
-      closeAuthModal();
-      showToast('Logged in as Arhan Raaj (Founder & Lead Architect)');
-    },
     logout: () => {
       authService.logout();
       closeProfileDropdown();
@@ -161,25 +155,6 @@ function renderSignInView(mount: HTMLElement): void {
     </div>
     <h2 class="auth-modal-title">Sign In to Your Laboratory</h2>
     <p class="auth-modal-desc">Access your private hardware projects, custom schematics, and AI Studio sessions.</p>
-
-    <!-- Quick 1-Click Demo Login Card -->
-    <div class="demo-login-box" onclick="window.innovationHubAuth.loginDemo()">
-      <div class="demo-avatar-wrap">
-        <img src="assets/arhanraaj-pfp.jpg" alt="Arhan Raaj" class="demo-avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Arhan+Raaj&background=0284c7&color=fff';" />
-      </div>
-      <div class="demo-info">
-        <div class="demo-name-row">
-          <span class="demo-name">Arhan Raaj</span>
-          <span class="demo-badge">1-CLICK LOGIN</span>
-        </div>
-        <span class="demo-role">Lead Hardware Architect &bull; Verified Founder</span>
-      </div>
-      <div class="demo-arrow">&rarr;</div>
-    </div>
-
-    <div class="auth-divider">
-      <span>OR USE EMAIL CREDENTIALS</span>
-    </div>
 
     <form onsubmit="window.innovationHubAuth.handleLogin(event)" class="auth-form" id="auth-signin-form">
       <div id="auth-error-msg" class="auth-error-banner" style="display:none;"></div>
@@ -325,44 +300,88 @@ function renderProfileView(mount: HTMLElement, user: AuthUser): void {
   `;
 }
 
-function handleLogin(e: Event): void {
+async function handleLogin(e: Event): Promise<void> {
   e.preventDefault();
   const emailInput = document.getElementById('signin-email') as HTMLInputElement | null;
   const passInput = document.getElementById('signin-password') as HTMLInputElement | null;
+  const submitBtn = document.getElementById('signin-submit-btn') as HTMLButtonElement | null;
   const errEl = document.getElementById('auth-error-msg');
 
   if (!emailInput || !passInput) return;
 
-  const res = authService.login(emailInput.value, passInput.value);
-  if (!res.success) {
+  if (errEl) errEl.style.display = 'none';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span>Signing in...</span>`;
+  }
+
+  try {
+    const res = await authService.login(emailInput.value, passInput.value);
+    if (!res.success) {
+      if (errEl) {
+        errEl.textContent = res.error || 'Failed to sign in. Please verify your email and password.';
+        errEl.style.display = 'block';
+      }
+    } else {
+      closeAuthModal();
+      showToast(`Welcome back, ${res.user?.name}!`);
+    }
+  } catch (err: any) {
     if (errEl) {
-      errEl.textContent = res.error || 'Failed to sign in.';
+      errEl.textContent = err.message || 'Network error during sign in.';
       errEl.style.display = 'block';
     }
-  } else {
-    closeAuthModal();
-    showToast(`Welcome back, ${res.user?.name}!`);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `
+        <span>Sign In to Account</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      `;
+    }
   }
 }
 
-function handleRegister(e: Event): void {
+async function handleRegister(e: Event): Promise<void> {
   e.preventDefault();
   const nameInput = document.getElementById('reg-name') as HTMLInputElement | null;
   const emailInput = document.getElementById('reg-email') as HTMLInputElement | null;
   const passInput = document.getElementById('reg-password') as HTMLInputElement | null;
+  const submitBtn = document.getElementById('reg-submit-btn') as HTMLButtonElement | null;
   const errEl = document.getElementById('auth-error-msg');
 
   if (!nameInput || !emailInput || !passInput) return;
 
-  const res = authService.register(nameInput.value, emailInput.value, passInput.value);
-  if (!res.success) {
+  if (errEl) errEl.style.display = 'none';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span>Creating account...</span>`;
+  }
+
+  try {
+    const res = await authService.register(nameInput.value, emailInput.value, passInput.value);
+    if (!res.success) {
+      if (errEl) {
+        errEl.textContent = res.error || 'Failed to create account.';
+        errEl.style.display = 'block';
+      }
+    } else {
+      closeAuthModal();
+      showToast(`Account created! Welcome, ${res.user?.name || nameInput.value}!`);
+    }
+  } catch (err: any) {
     if (errEl) {
-      errEl.textContent = res.error || 'Failed to create account.';
+      errEl.textContent = err.message || 'Network error during registration.';
       errEl.style.display = 'block';
     }
-  } else {
-    closeAuthModal();
-    showToast(`Account created! Welcome, ${res.user?.name}!`);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `
+        <span>Create Account &amp; Start Building</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      `;
+    }
   }
 }
 

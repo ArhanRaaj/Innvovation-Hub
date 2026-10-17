@@ -31,10 +31,11 @@ const DEFAULT_OPENROUTER_KEYS: string[] = [];
 
 export function getAISettings(): AIServiceConfig {
   const ls = typeof localStorage !== 'undefined' ? localStorage : null;
-  const env = (import.meta as any).env || {};
-  const envGeminiKey = env.VITE_GEMINI_API_KEY || '';
-  const envGroqKey = env.VITE_GROQ_API_KEY || '';
-  const envOpenRouterKey = env.VITE_OPENROUTER_API_KEY || '';
+  const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
+  const globalProc = (globalThis as any).process?.env || {};
+  const envGeminiKey = env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || globalProc.GEMINI_API_KEY || '';
+  const envGroqKey = env.GROQ_API_KEY || env.VITE_GROQ_API_KEY || globalProc.GROQ_API_KEY || '';
+  const envOpenRouterKey = env.OPENROUTER_API_KEY || env.VITE_OPENROUTER_API_KEY || globalProc.OPENROUTER_API_KEY || '';
 
   const savedProvider = ls?.getItem('ai_provider') as AIProvider;
   const customKey = ls?.getItem('ai_api_key') || envGeminiKey || envGroqKey || envOpenRouterKey || '';

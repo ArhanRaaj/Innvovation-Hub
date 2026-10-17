@@ -7930,3 +7930,96 @@ button:active,
   background: rgba(255, 255, 255, 0.08);
   color: #CBD5E1;
 }
+
+/* Projects Auth Gate */
+.auth-gate-card {
+  max-width: 480px;
+  margin: 40px auto;
+  background: #0E0F14;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 42px 32px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+}
+
+.auth-gate-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px auto;
+  border-radius: 50%;
+  background: rgba(0, 242, 254, 0.1);
+  border: 1px solid rgba(0, 242, 254, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-gate-kicker {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #00f2fe;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.auth-gate-title {
+  color: #FFFFFF;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.auth-gate-desc {
+  color: #94A3B8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0 0 28px 0;
+}
+
+.auth-gate-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.auth-gate-btn-primary {
+  width: 100%;
+  height: 46px;
+  background: #FFFFFF;
+  color: #09090B;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-gate-btn-primary:hover {
+  background: #00f2fe;
+  color: #000000;
+  box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3);
+  transform: translateY(-1px);
+}
+
+.auth-gate-btn-secondary {
+  width: 100%;
+  height: 46px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-gate-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+

@@ -121,21 +121,27 @@
 
     <!-- Container for Control Center & Content Grid -->
     <div class="container" style="padding-bottom: 90px;">
-      <!-- Repository Scope Switcher (Curated Benchmark Labs vs My Account Projects) -->
-      <div class="scope-segment-container" id="projects-scope-switcher" style="margin-bottom: 18px;">
-        <button class="scope-segment-btn active" id="scope-btn-curated" onclick="window.omniLabScope.setScope('curated')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span>Curated Labs</span>
-          <span class="scope-badge-count" id="scope-curated-count">12</span>
-        </button>
-        <button class="scope-segment-btn" id="scope-btn-my-projects" onclick="window.omniLabScope.setScope('my-projects')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span>My Projects</span>
-          <span class="scope-badge-count" id="scope-my-count">0</span>
-        </button>
-        <button class="scope-segment-btn" id="scope-btn-all" onclick="window.omniLabScope.setScope('all')">
-          <span>All Builds</span>
-        </button>
+      <!-- Unauthenticated Access Lock Gate -->
+      <div id="projects-auth-gate" style="display: none; padding: 40px 20px; text-align: center;">
+        <div class="auth-gate-card">
+          <div class="auth-gate-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <span class="auth-gate-kicker">THE INNOVATION HUB &bull; PRIVATE LABORATORY</span>
+          <h2 class="auth-gate-title">Sign In to View Projects</h2>
+          <p class="auth-gate-desc">Please log in to your account or create a new engineer profile to access the hardware repository and build projects.</p>
+          <div class="auth-gate-buttons">
+            <button class="auth-gate-btn-primary" onclick="window.innovationHubAuth.openAuthModal('signin')">
+              Sign In to Your Account &rarr;
+            </button>
+            <button class="auth-gate-btn-secondary" onclick="window.innovationHubAuth.openAuthModal('register')">
+              Create Free Account
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Modern Command Hub / Floating Filter Bar -->
