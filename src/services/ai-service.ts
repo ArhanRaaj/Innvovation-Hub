@@ -110,6 +110,15 @@ You must return ONLY a valid, parseable JSON object matching this exact schema:
 }
 
 DO NOT include markdown code fences (like \`\`\`json). Output pure JSON only.
+
+PROJECT ACCURACY RULES:
+- Build exactly the device or outcome the user requested. Keep the title, description, parts list, wiring, firmware, science explanation, and steps about that same device.
+- Treat the requested object and action as required. Do not silently substitute a different project just because it is more familiar.
+- Choose only parts that perform the requested job. Do not add unrelated ultrasonic sensors, displays, buzzers, servos, or features unless the prompt needs them.
+- Every wire endpoint must match a listed board pin or component pin. Firmware pins and behavior must match the wiring and parts.
+- If a detail is missing, make a simple stated assumption and still build the requested project. Prefer a safe low-voltage tabletop prototype when a full-size machine could be hazardous.
+- Never claim a hobby servo or small DC motor can safely move a full-size door, person, mains appliance, or other full-size load. State the prototype scale and limits.
+- Before returning JSON, check that the parts can physically build the named project and the firmware performs the requested action. Fix any mismatch.
 `;
 
 const SYSTEM_MODIFY_PROMPT = `
@@ -552,6 +561,15 @@ IMPORTANT FOR THIS WORKBENCH:
  * Creates a complete robotics project from a user prompt.
  */
 export async function createProjectFromPrompt(prompt: string, targetBoard?: BoardType): Promise<ScienceProject> {
+  // Keep common, safety-sensitive builds deterministic: a generated title must not
+  // be allowed to describe a fan while the BOM and circuit belong to another build.
+  if (/\b(?:table|desk|portable|mini)\s+fan\b|\bfan\s+(?:project|with|using|controller|speed|build)\b|\b(?:build|make|create|design)\s+(?:me\s+)?(?:a\s+)?fan\b/i.test(prompt)) {
+    return getTableFanTemplate(targetBoard || inferBoardFromPrompt(prompt));
+  }
+  if (isAutomaticDoorCloserPrompt(prompt)) {
+    return getAutomaticDoorCloserTemplate(targetBoard || inferBoardFromPrompt(prompt));
+  }
+
   const enrichedPrompt = targetBoard ? `${prompt} (Target MCU: ${targetBoard})` : prompt;
   const responseText = await callLLM(
     SYSTEM_ARCHITECT_PROMPT,
@@ -561,6 +579,183 @@ export async function createProjectFromPrompt(prompt: string, targetBoard?: Boar
   return cleanAndParseProjectJSON(responseText, enrichedPrompt);
 }
 
+function inferBoardFromPrompt(prompt: string): BoardType {
+  return /\b(?:esp32|esp-32)\b/i.test(prompt) ? 'ESP32' : 'Arduino Uno';
+}
+
+function isAutomaticDoorCloserPrompt(prompt: string): boolean {
+  return /\b(?:automatic|automatically|auto[- ]closing|self[- ]closing|door[- ]closer)\b.{0,40}\bdoor\b|\bdoor\b.{0,40}\b(?:automatically|auto[- ]close|self[- ]clos|closer|close itself)\b/i.test(prompt);
+}
+
+function getTableFanTemplate(board: BoardType): ScienceProject {
+  const isUno = board === 'Arduino Uno';
+  const controlPin = isUno ? 'D9' : 'GPIO 18';
+  const potPin = isUno ? 'A0' : 'GPIO 34';
+  const pwmCode = isUno
+    ? '  analogWrite(FAN_PWM_PIN, fanSpeed);'
+    : '  ledcWrite(FAN_PWM_PIN, fanSpeed);';
+  const pwmSetup = isUno
+    ? '  pinMode(FAN_PWM_PIN, OUTPUT);'
+    : '  ledcAttach(FAN_PWM_PIN, PWM_FREQUENCY, PWM_RESOLUTION);';
+
+  return {
+    id: `ai-table-fan-${Date.now()}`,
+    title: `Adjustable-Speed Table Fan (${board} Edition)`,
+    shortDesc: 'A small, low-voltage tabletop fan with a potentiometer for smooth speed control. A logic-level MOSFET switches motor current from a separate 5V supply, so the fan is not powered directly from a microcontroller pin.',
+    board,
+    category: 'Robotics & Automation',
+    difficulty: 'Beginner',
+    estimatedTime: '1–2 Hours',
+    rating: 4.9,
+    featured: false,
+    tags: ['Table Fan', 'PWM', 'DC Motor', 'MOSFET', 'Speed Control', board],
+    components: [
+      { name: isUno ? 'Arduino Uno R3' : 'ESP32 Development Board', qty: '1', note: 'Reads the speed knob and outputs a PWM control signal' },
+      { name: '5V Brushed DC Motor with Fan Blade', qty: '1', note: 'Use a small motor rated for the external 5V supply; do not connect a bare blade without a guard' },
+      { name: 'Logic-Level N-Channel MOSFET', qty: '1', note: 'Low-side motor switch; choose a part that turns fully on at the board logic voltage' },
+      { name: 'Flyback Diode (1N5819 or 1N4001)', qty: '1', note: 'Across the brushed motor; cathode to +5V, anode to the MOSFET drain' },
+      { name: '10kΩ Linear Potentiometer', qty: '1', note: 'User speed control; end pins to 3.3V/5V and GND, wiper to analog input' },
+      { name: 'Regulated 5V DC Supply (1A or sized for motor)', qty: '1', note: 'Powers the motor separately from the board; grounds must be common' },
+      { name: '100Ω Gate Resistor and 10kΩ Gate Pull-Down', qty: '1 set', note: 'Gate resistor limits switching spikes; pull-down keeps fan off during startup' },
+      { name: 'Fan Guard, Table Stand, and Jumper Wires', qty: '1 set', note: 'Secure the motor and cover the rotating blade' }
+    ],
+    wiringTable: [
+      { from: `Arduino ${controlPin}`.replace('Arduino GPIO', 'ESP32 GPIO'), to: '100Ω resistor → MOSFET Gate', color: 'orange', desc: 'PWM motor speed command' },
+      { from: 'MOSFET Gate', to: '10kΩ resistor → Common GND', color: 'black', desc: 'Gate pull-down; holds the fan off at reset' },
+      { from: `Arduino ${potPin}`.replace('Arduino GPIO', 'ESP32 GPIO'), to: 'Potentiometer Wiper (middle pin)', color: 'blue', desc: 'Reads the requested fan speed' },
+      { from: isUno ? 'Arduino 5V' : 'ESP32 3V3', to: 'Potentiometer outer pin 1', color: 'red', desc: 'Potentiometer reference voltage' },
+      { from: isUno ? 'Arduino GND' : 'ESP32 GND', to: 'Potentiometer outer pin 3 and MOSFET Source', color: 'black', desc: 'Common signal and motor ground' },
+      { from: 'External regulated +5V', to: 'Brushed motor positive (+)', color: 'red', desc: 'Motor power from the separate supply, never from a GPIO pin' },
+      { from: 'Brushed motor negative (−)', to: 'MOSFET Drain', color: 'blue', desc: 'Switched low-side motor connection' },
+      { from: 'External supply negative (−)', to: 'MOSFET Source and board GND', color: 'black', desc: 'Shared ground reference for PWM control' },
+      { from: 'Flyback diode cathode (striped end)', to: 'Motor positive / external +5V', color: 'red', desc: 'Clamps the motor voltage spike when switching off' },
+      { from: 'Flyback diode anode', to: 'Motor negative / MOSFET Drain', color: 'purple', desc: 'Connect diode across the motor with polarity observed' }
+    ],
+    circuitDiagram: {
+      boardType: isUno ? 'arduino-uno' : 'esp32',
+      modules: [
+        { name: '10kΩ Speed Potentiometer', type: 'sensor', pins: ['VCC', 'WIPER', 'GND'] },
+        { name: 'Logic-Level N-MOSFET Motor Driver', type: 'driver', pins: ['GATE', 'DRAIN', 'SOURCE'] },
+        { name: '5V Brushed DC Fan Motor', type: 'actuator', pins: ['M+', 'M-'] },
+        { name: 'External Regulated 5V Supply', type: 'power', pins: ['+5V', 'GND'] }
+      ]
+    },
+    code: `// Adjustable-speed low-voltage table fan\n// Motor power must come from the separate 5V supply through the MOSFET.\n// Never connect the motor directly to a microcontroller GPIO.\n\nconst int FAN_PWM_PIN = ${isUno ? '9' : '18'};\nconst int SPEED_POT_PIN = ${isUno ? 'A0' : '34'};\n${isUno ? '' : 'const int PWM_FREQUENCY = 20000;\nconst int PWM_RESOLUTION = 8;\n'}\nvoid setup() {\n  Serial.begin(115200);\n${pwmSetup}\n  pinMode(SPEED_POT_PIN, INPUT);\n}\n\nvoid loop() {\n  const int knob = analogRead(SPEED_POT_PIN);\n  const int fanSpeed = map(knob, 0, ${isUno ? '1023' : '4095'}, 0, 255);\n${pwmCode}\n\n  Serial.print("Fan PWM: ");\n  Serial.println(fanSpeed);\n  delay(20);\n}\n`,
+    workingPrinciple: 'The potentiometer produces an analog voltage that represents the requested speed. The microcontroller converts that reading to a pulse-width-modulated (PWM) signal. The logic-level N-channel MOSFET switches the motor current on the low side; changing the PWM duty cycle changes the motor’s average voltage and speed. The motor draws from a separate regulated supply, while the shared ground gives the MOSFET gate signal a reference. The flyback diode is fitted across a brushed DC motor to clamp inductive voltage when switching off.',
+    scientificApplications: 'This build demonstrates analog input, PWM, transistor switching, inductive load protection, and the difference between control-signal power and actuator power.',
+    assemblySteps: [
+      'Mount the 5V brushed DC motor securely on a stable table stand and fit a fan guard before attaching or testing the blade.',
+      'Wire the MOSFET as a low-side switch: motor negative to drain, source to common ground, and board PWM pin through 100Ω to gate. Add the 10kΩ gate-to-ground pull-down.',
+      'Connect the external regulated 5V supply positive to motor positive. Connect its negative to MOSFET source and board GND. Do not power the motor from the board 5V pin or a GPIO.',
+      'Place the flyback diode across the brushed motor: striped cathode to motor positive, anode to motor negative/MOSFET drain.',
+      'Connect the potentiometer outer pins to board 5V (or 3.3V on ESP32) and GND; connect its center wiper to the analog input.',
+      'Check all supply polarities and that the blade is guarded, then upload the firmware. Turn the potentiometer gradually and confirm the fan speed changes.'
+    ]
+  };
+}
+
+function getAutomaticDoorCloserTemplate(board: BoardType): ScienceProject {
+  const isUno = board === 'Arduino Uno';
+  const servoPin = isUno ? 9 : 18;
+  const pirPin = isUno ? 2 : 5;
+  const doorPin = 4;
+  const servoLibrary = isUno ? '#include <Servo.h>' : '#include <ESP32Servo.h>';
+  const boardPin = (pin: number) => isUno ? `Arduino Pin D${pin}` : `ESP32 GPIO ${pin}`;
+
+  return {
+    id: `ai-model-door-closer-${Date.now()}`,
+    title: `Automatic Door Closer Demonstrator (${board} Edition)`,
+    shortDesc: 'A low-voltage tabletop door model that uses a magnetic switch and motion sensor to close a lightweight hinged door after the area has stayed clear. This is a classroom prototype, not a mechanism for a full-size door.',
+    board,
+    category: 'Robotics & Automation',
+    difficulty: 'Beginner',
+    estimatedTime: '1–2 Hours',
+    rating: 4.9,
+    featured: false,
+    tags: ['Automatic Door', 'Door Closer', 'PIR Motion Sensor', 'Servo', board],
+    components: [
+      { name: isUno ? 'Arduino Uno R3' : 'ESP32 Development Board', qty: '1', note: 'Reads the door and motion sensors and commands the model actuator' },
+      { name: 'SG90 or MG90S Servo', qty: '1', note: 'Moves only a lightweight tabletop model door; not suitable for a full-size door' },
+      { name: 'PIR Motion Sensor Module', qty: '1', note: 'Keeps the model door open while movement is detected in the monitored area' },
+      { name: 'Magnetic Reed Door Switch', qty: '1', note: 'Mounted across the frame and door; closed contact means the model door is shut' },
+      { name: 'Regulated 5V 2A Servo Supply', qty: '1', note: 'Dedicated servo power; connect its ground to board GND' },
+      { name: 'Lightweight Hinged Door Model and Linkage', qty: '1 set', note: 'Small foamboard or cardboard demonstrator with an adjustable servo arm' },
+      { name: 'Jumper Wires and Mounting Hardware', qty: '1 set', note: 'Secure the sensor, servo, and switch to the model frame' }
+    ],
+    wiringTable: [
+      { from: boardPin(servoPin), to: 'Servo Signal (orange/yellow)', color: 'orange', desc: 'Commands the model door to close' },
+      { from: boardPin(pirPin), to: 'PIR Sensor OUT', color: 'green', desc: 'Motion detection resets the clear-area timer' },
+      { from: boardPin(doorPin), to: 'Magnetic Reed Switch → GND', color: 'blue', desc: 'INPUT_PULLUP: LOW when door is closed, HIGH when open' },
+      { from: isUno ? 'Arduino 5V' : 'ESP32 VIN (5V)', to: 'PIR Sensor VCC', color: 'red', desc: 'Sensor power' },
+      { from: isUno ? 'Arduino GND' : 'ESP32 GND', to: 'PIR Sensor GND and reed switch GND', color: 'black', desc: 'Logic ground reference' },
+      { from: 'External regulated 5V supply (+)', to: 'Servo VCC (red)', color: 'red', desc: 'Dedicated actuator power; do not power servo from a GPIO' },
+      { from: 'External supply GND', to: 'Servo GND and board GND', color: 'black', desc: 'Common ground required for the servo signal' }
+    ],
+    circuitDiagram: {
+      boardType: isUno ? 'arduino-uno' : 'esp32',
+      modules: [
+        { name: 'PIR Motion Sensor', type: 'sensor', pins: ['VCC', 'OUT', 'GND'] },
+        { name: 'Magnetic Reed Door Switch', type: 'sensor', pins: ['DOOR', 'GND'] },
+        { name: 'Servo Model Door Actuator', type: 'actuator', pins: ['SIGNAL', 'VCC', 'GND'] },
+        { name: 'External Regulated 5V Servo Supply', type: 'power', pins: ['+5V', 'GND'] }
+      ]
+    },
+    code: `${servoLibrary}
+
+const int SERVO_PIN = ${servoPin};
+const int PIR_PIN = ${pirPin};
+const int DOOR_OPEN_PIN = ${doorPin}; // INPUT_PULLUP: LOW = closed, HIGH = open
+const int DOOR_CLOSED_ANGLE = 10;
+const unsigned long CLEAR_WAIT_MS = 15000;
+
+Servo doorServo;
+unsigned long lastMotionAt = 0;
+bool closeCommandSent = false;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(PIR_PIN, INPUT);
+  pinMode(DOOR_OPEN_PIN, INPUT_PULLUP);
+  doorServo.attach(SERVO_PIN);
+  doorServo.write(DOOR_CLOSED_ANGLE);
+  lastMotionAt = millis();
+  Serial.println("Tabletop door closer ready");
+}
+
+void loop() {
+  const bool doorIsOpen = digitalRead(DOOR_OPEN_PIN) == HIGH;
+  const bool motionDetected = digitalRead(PIR_PIN) == HIGH;
+
+  if (motionDetected) {
+    lastMotionAt = millis();
+    closeCommandSent = false;
+  }
+
+  if (!doorIsOpen) {
+    closeCommandSent = false;
+  } else if (!motionDetected && !closeCommandSent &&
+             millis() - lastMotionAt >= CLEAR_WAIT_MS) {
+    doorServo.write(DOOR_CLOSED_ANGLE);
+    closeCommandSent = true;
+    Serial.println("Area clear; closing model door");
+  }
+
+  delay(50);
+}
+`,
+    workingPrinciple: 'The magnetic reed switch reports whether the model door is open. A PIR sensor detects movement in the monitored area; each detection resets a 15-second clear-area timer. If the door remains open after the area is clear, the microcontroller commands a hobby servo to move the lightweight model door toward its closed position. The timer and switch provide a simple state-based control system. A hobby servo is only suitable for a small demonstrator and cannot safely close a full-size door.',
+    assemblySteps: [
+      'Build a lightweight hinged tabletop door and securely mount the servo so its arm can gently pull the door toward the frame.',
+      'Mount the reed switch on the frame and its magnet on the door. Align them so the switch connects to GND while the door is closed and opens electrically when the door moves away.',
+      'Mount the PIR sensor so it detects movement in the space that must be clear before the model closes.',
+      `Connect the servo signal to ${isUno ? 'D9' : 'GPIO 18'}, PIR OUT to ${isUno ? 'D2' : 'GPIO 5'}, and reed switch between ${isUno ? 'D4' : 'GPIO 4'} and GND.`,
+      'Power the servo from the separate regulated 5V supply. Join that supply ground to board GND; do not power the servo from a GPIO or assume the board regulator can supply its startup current.',
+      'Upload the sketch, adjust DOOR_CLOSED_ANGLE to suit the linkage, and test with fingers clear of the hinge. Confirm motion resets the timer and the servo moves only the lightweight model.'
+    ],
+    scientificApplications: 'Demonstrates occupancy sensing, time-delayed automation, digital inputs, servo control, and human-aware safety logic used in access-control prototypes.'
+  };
+}
+
 /**
  * Modifies an existing project using an AI instruction.
  */
@@ -568,6 +763,21 @@ export async function modifyProjectWithPrompt(
   currentProject: ScienceProject,
   modificationInstruction: string
 ): Promise<ScienceProject> {
+  if (/\b(?:table|desk|portable|mini)\s+fan\b/i.test(modificationInstruction)) {
+    const fanProject = getTableFanTemplate(currentProject.board);
+    fanProject.id = currentProject.id;
+    fanProject.userId = currentProject.userId;
+    fanProject.authorName = currentProject.authorName;
+    return fanProject;
+  }
+  if (isAutomaticDoorCloserPrompt(modificationInstruction)) {
+    const doorProject = getAutomaticDoorCloserTemplate(currentProject.board);
+    doorProject.id = currentProject.id;
+    doorProject.userId = currentProject.userId;
+    doorProject.authorName = currentProject.authorName;
+    return doorProject;
+  }
+
   const userPayload = `
 CURRENT PROJECT JSON:
 ${JSON.stringify(currentProject, null, 2)}
