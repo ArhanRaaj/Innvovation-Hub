@@ -200,19 +200,20 @@ body {
 }
 
 .brand-name {
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.04em;
   color: #FFFFFF;
+  white-space: nowrap;
 }
 
 .nav-links {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  position: static;
+  transform: none;
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: clamp(14px, 1.8vw, 30px);
+  margin: 0 auto;
 }
 
 .nav-link {
@@ -226,6 +227,7 @@ body {
   background: none !important;
   border: none !important;
   padding: 0;
+  white-space: nowrap;
 }
 
 .nav-link:hover,
@@ -243,11 +245,18 @@ body {
   margin-left: 3px;
 }
 
+.nav-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .nav-cta-glass-btn {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 9999px;
-  padding: 8px 22px;
+  padding: 8px 20px;
   color: #FFFFFF;
   font-size: 0.84rem;
   font-weight: 600;
@@ -255,6 +264,8 @@ body {
   transition: all 0.2s ease;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 .nav-cta-glass-btn:hover {
@@ -6414,15 +6425,35 @@ body {
   z-index: 0;
 }
 
-/* Modal override when opened as popup on index.html / projects.html */
+/* AI Studio: Full Screen Edge-to-Edge Workspace (Never floating, never small) */
+#ai-architect-modal.modal-backdrop {
+  padding: 0 !important;
+  margin: 0 !important;
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  background: #131314 !important;
+  z-index: 999999 !important;
+}
+
+#ai-architect-modal.active {
+  display: flex !important;
+}
+
 #ai-architect-modal .ai-antigravity-studio,
-#ai-architect-modal .google-ai-studio {
-  width: 95vw !important;
-  max-width: 1440px !important;
-  height: 90vh !important;
-  border: 1px solid #282a2d !important;
-  border-radius: 16px !important;
-  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.95) !important;
+#ai-architect-modal .google-ai-studio,
+.google-ai-studio {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   overflow: hidden !important;
 }
 
@@ -7484,85 +7515,61 @@ button:active,
   margin: 0 0 20px 0;
 }
 
-/* Demo 1-Click Login Box */
-.demo-login-box {
+/* Segmented Tabs for Sign In vs Register */
+.auth-tabs-segmented {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(0, 242, 254, 0.08));
-  border: 1px solid rgba(0, 242, 254, 0.35);
-  border-radius: 14px;
-  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 22px;
+  gap: 4px;
+}
+
+.auth-seg-tab {
+  flex: 1;
+  padding: 9px 14px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-bottom: 20px;
-}
-
-.demo-login-box:hover {
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.22), rgba(0, 242, 254, 0.16));
-  border-color: #00f2fe;
-  box-shadow: 0 0 24px rgba(0, 242, 254, 0.25);
-  transform: translateY(-2px);
-}
-
-.demo-avatar-wrap {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid #00f2fe;
-  flex-shrink: 0;
-}
-
-.demo-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.demo-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.demo-name-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 }
 
-.demo-name {
+.auth-seg-tab:hover {
   color: #FFFFFF;
-  font-weight: 700;
-  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.demo-badge {
+.auth-seg-tab.active {
   background: #00f2fe;
   color: #000000;
-  font-size: 0.62rem;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  letter-spacing: 0.05em;
-}
-
-.demo-role {
-  display: block;
-  color: #94A3B8;
-  font-size: 0.72rem;
-  margin-top: 2px;
-}
-
-.demo-arrow {
-  color: #00f2fe;
-  font-size: 1.2rem;
+  box-shadow: 0 4px 14px rgba(0, 242, 254, 0.35);
   font-weight: 700;
-  transition: transform 0.2s ease;
 }
 
-.demo-login-box:hover .demo-arrow {
-  transform: translateX(4px);
+.auth-pwd-toggle {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #64748B;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.auth-pwd-toggle:hover {
+  color: #00f2fe;
 }
 
 /* Divider */

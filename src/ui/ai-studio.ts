@@ -6,6 +6,7 @@
 // ============================================================================
 
 import type { ScienceProject, FilterState } from '../types.ts';
+import { PROJECTS_DATA } from '../data/projects.ts';
 import {
   createProjectFromPrompt,
   detectPromptIntent,
@@ -44,7 +45,8 @@ export interface StudioFolder {
 export interface ChatSession {
   id: string;
   title: string;
-  folderId: string | null; // null = root unorganized
+  folderId: string | null;
+  projectId?: string; // Links session directly to a dedicated project laboratory
   createdAt: number;
   updatedAt: number;
   targetBoard: 'ESP32' | 'Arduino Uno';
@@ -270,26 +272,9 @@ export function initAIStudio(): void {
   const user = authService.getCurrentUser();
   const uid = user ? user.id : 'guest';
 
-  // 1. Load user-specific folders
+  // 1. Load user-specific sessions (strictly isolated per user from Supabase!)
   try {
-    let savedFolders = authService.getUserFolders(uid);
-    if (!savedFolders || savedFolders.length === 0) {
-      savedFolders = [
-        { id: 'folder-robotics', name: 'Robotics Lab', createdAt: Date.now(), isExpanded: true },
-        { id: 'folder-iot', name: 'IoT & Sensor Nodes', createdAt: Date.now(), isExpanded: true },
-        { id: 'folder-sciencefair', name: 'Science Fair 2026', createdAt: Date.now(), isExpanded: true }
-      ];
-      authService.saveUserFolders(savedFolders, uid);
-    }
-    studioFolders = savedFolders;
-  } catch {
-    studioFolders = [];
-  }
-
-  // 2. Load user-specific sessions (strictly isolated per user from Supabase!)
-  try {
-    let savedSessions = authService.getUserSessions(uid);
-
+    const savedSessions = authService.getUserSessions(uid);
     if (savedSessions && savedSessions.length > 0) {
       chatSessions = savedSessions;
       // Clean up any test/dummy synthesized projects
@@ -316,21 +301,84 @@ export function initAIStudio(): void {
     chatSessions = [];
   }
 
-  // Ensure default session if still empty
-  if (chatSessions.length === 0) {
-    chatSessions.push({
+  // 2. Ensure each of the 12 curated projects has its dedicated individual chat session
+  const userProjects = authService.getUserProjects(uid);
+  const allProjectsToMap = [...PROJECTS_DATA, ...userProjects];
+
+  for (const proj of allProjectsToMap) {
+    const existing = chatSessions.find(s => s.projectId === proj.id || s.id === 'project-chat-' + proj.id);
+    if (!existing) {
+      chatSessions.push({
+        id: 'project-chat-' + proj.id,
+        projectId: proj.id,
+        title: proj.title,
+        folderId: null,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        targetBoard: proj.board as 'ESP32' | 'Arduino Uno',
+        messages: [
+          {
+            id: 'msg-welcome-' + proj.id,
+            role: 'assistant',
+            content: `### 🔬 **${proj.title}** Engineering Laboratory
+
+I have the verified hardware schematic, BOM (**${proj.components.length} components**), conductor netlist (**${proj.wiringTable.length} pin connections**), and compilable Arduino C++ firmware loaded on the workbench.
+
+How can I help you with this project today? Feel free to ask about the wiring, code logic, or troubleshooting!`,
+            timestamp: 'Just now',
+            suggestions: [
+              { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+              { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
+              { label: '⚡ Power & Voltage', prompt: 'What are the power supply and voltage requirements?' },
+              { label: '🛠️ Troubleshooting Tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
+            ]
+          }
+        ]
+      });
+    } else {
+      // Keep existing user chat history while maintaining project metadata
+      existing.projectId = proj.id;
+      existing.title = proj.title;
+      existing.targetBoard = proj.board as 'ESP32' | 'Arduino Uno';
+    }
+  }
+
+  // 3. Ensure at least one general engineering chat exists
+  const hasGeneralChat = chatSessions.some(s => !s.projectId);
+  if (!hasGeneralChat) {
+    chatSessions.unshift({
       id: 'session-' + Date.now(),
-      title: 'Untitled architecture',
+      title: 'General Engineering Chat',
       folderId: null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      targetBoard: 'ESP32',
+      targetBoard: currentTargetBoard,
       messages: []
     });
   }
 
-  activeSessionId = chatSessions[0].id;
-  studioMessages = chatSessions[0].messages;
+  // 4. URL Routing: If user visits /studio?project=..., auto-activate that project's chat!
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const reqProjId = urlParams.get('project');
+    if (reqProjId) {
+      const match = chatSessions.find(s => s.projectId === reqProjId || s.id === 'project-chat-' + reqProjId);
+      if (match) {
+        activeSessionId = match.id;
+        currentTargetBoard = match.targetBoard || 'ESP32';
+        studioMessages = match.messages;
+        return;
+      }
+    }
+  }
+
+  // Set active session
+  if (!activeSessionId || !chatSessions.some(s => s.id === activeSessionId)) {
+    activeSessionId = chatSessions[0].id;
+  }
+  const activeSess = chatSessions.find(s => s.id === activeSessionId) || chatSessions[0];
+  studioMessages = activeSess.messages;
+  currentTargetBoard = activeSess.targetBoard || 'ESP32';
 }
 
 export function getAllStudioProjects(): ScienceProject[] {
@@ -371,6 +419,67 @@ export function getStudioProjectById(id: string): ScienceProject | undefined {
   return undefined;
 }
 
+function renderWorkspaceHeaderHTML(): string {
+  const active = getActiveSession();
+  const currentUser = authService.getCurrentUser();
+  const userInitial = currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+  const userTitle = currentUser ? `${currentUser.name} (${currentUser.email}) - Account Profile` : 'Sign In';
+
+  if (active.projectId) {
+    const isESP = active.targetBoard === 'ESP32';
+    const boardColor = isESP ? '#38bdf8' : '#34d399';
+    const boardBg = isESP ? 'rgba(56, 189, 248, 0.15)' : 'rgba(52, 211, 153, 0.15)';
+    const boardBorder = isESP ? 'rgba(56, 189, 248, 0.3)' : 'rgba(52, 211, 153, 0.3)';
+
+    return `
+      <header id="studio-workspace-header" class="h-12 border-b border-[#282a2d] px-4 flex items-center justify-between shrink-0" style="height:48px; border-bottom:1px solid #282a2d; padding:0 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <div class="flex items-center space-x-2.5 min-w-0" style="display:flex; align-items:center; gap:8px; min-width:0;">
+          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; background:rgba(66, 133, 244, 0.15); color:#8ab4f8; padding:3px 8px; border-radius:9999px; border:1px solid rgba(66, 133, 244, 0.3); white-space:nowrap;">🔬 Project Lab</span>
+          <span class="text-sm text-white font-semibold truncate" id="studio-active-title" style="font-size:14px; font-weight:600; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            ${escapeHtml(active.title)}
+          </span>
+          <span style="font-size:10px; padding:2px 8px; border-radius:4px; font-family:monospace; font-weight:700; color:${boardColor}; background:${boardBg}; border:1px solid ${boardBorder}; white-space:nowrap;">
+            ${active.targetBoard}
+          </span>
+        </div>
+
+        <div class="flex items-center space-x-2 text-xs" style="display:flex; align-items:center; gap:8px; font-size:12px;">
+          <button class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#202124] hover:bg-[#282a2d] text-[#e8eaed] border border-[#3c4043] transition-colors cursor-pointer" onclick="window.omniLabStudio.inspectActiveProject()" title="View Schematic & Circuit Diagram" style="display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:8px; background:#202124; color:#e8eaed; border:1px solid #3c4043; cursor:pointer;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ab4f8" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Schematic</span>
+          </button>
+          <button class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#202124] hover:bg-[#282a2d] text-[#e8eaed] border border-[#3c4043] transition-colors cursor-pointer" onclick="window.omniLabStudio.copyLatestCode()" title="Copy Arduino C++ Firmware" style="display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:8px; background:#202124; color:#e8eaed; border:1px solid #3c4043; cursor:pointer;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>Copy Code</span>
+          </button>
+          <div id="studio-header-avatar-btn" class="w-7 h-7 rounded-full bg-[#0284c7] hover:bg-[#00f2fe] hover:text-black text-white flex items-center justify-center font-semibold text-xs cursor-pointer transition-colors shadow-sm" style="width:28px; height:28px; border-radius:50%; background:#0284c7; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; cursor:pointer;" title="${userTitle}" onclick="window.omniLabStudio.showAuthorInfo()">${userInitial}</div>
+          <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer ml-1 text-lg leading-none" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:18px;" onclick="if(window.omniLab?.closeAIArchitectModal && !window.location.pathname.includes('studio')){window.omniLab.closeAIArchitectModal();}else{window.location.href='/projects';}" title="Exit Studio">&times;</button>
+        </div>
+      </header>
+    `;
+  }
+
+  // General Engineering Chat Header
+  return `
+    <header id="studio-workspace-header" class="h-12 border-b border-[#282a2d] px-5 flex items-center justify-between shrink-0" style="height:48px; border-bottom:1px solid #282a2d; padding:0 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+      <div class="flex items-center space-x-2 cursor-pointer group" style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="window.omniLabStudio.renamePrompt()" title="Click to rename prompt">
+        <span class="text-sm text-white font-medium group-hover:text-[#8ab4f8] transition-colors" id="studio-active-title" style="font-size:14px; font-weight:500; color:#ffffff;">${escapeHtml(active.title)}</span>
+        <svg class="w-3.5 h-3.5 text-[#9aa0a6] group-hover:text-white transition-colors" style="width:14px; height:14px; color:#9aa0a6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+
+      <div class="flex items-center space-x-3 text-xs" style="display:flex; align-items:center; gap:12px; font-size:12px;">
+        <button id="studio-compare-btn" class="flex items-center space-x-1.5 px-3 py-1 rounded bg-[#202124] hover:bg-[#282a2d] text-[#e8eaed] border border-[#3c4043] transition-colors cursor-pointer" style="display:flex; align-items:center; gap:6px; padding:4px 12px; border-radius:4px; background:#202124; color:#e8eaed; border:1px solid #3c4043; cursor:pointer;" onclick="window.omniLabStudio.toggleTargetBoard()" title="Toggle Target Architecture (${currentTargetBoard})">
+          <span class="text-[#8ab4f8]">→</span>
+          <span id="studio-compare-text">Compare (${currentTargetBoard})</span>
+        </button>
+        <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer text-base" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:16px;" onclick="window.omniLabStudio.createNewChat()" title="Start New Chat">⋮</button>
+        <div id="studio-header-avatar-btn" class="w-7 h-7 rounded-full bg-[#0284c7] hover:bg-[#00f2fe] hover:text-black text-white flex items-center justify-center font-semibold text-xs cursor-pointer transition-colors shadow-sm" style="width:28px; height:28px; border-radius:50%; background:#0284c7; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; cursor:pointer;" title="${userTitle}" onclick="window.omniLabStudio.showAuthorInfo()">${userInitial}</div>
+        <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer ml-1 text-lg leading-none" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:18px;" onclick="if(window.omniLab?.closeAIArchitectModal && !window.location.pathname.includes('studio')){window.omniLab.closeAIArchitectModal();}else{window.location.href='/projects';}" title="Exit Studio">&times;</button>
+      </div>
+    </header>
+  `;
+}
+
 export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
   activeMountContainerId = containerId;
   const modal = document.getElementById(containerId);
@@ -406,7 +515,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
             </button>
           </div>
           <div class="mt-6 pt-4 border-t border-white/5 w-full flex justify-center" style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08); width:100%; display:flex; justify-content:center;">
-            <a href="index.html" class="text-xs text-gray-400 hover:text-white" style="font-size:12px; color:#94a3b8; text-decoration:none;">&larr; Return to Home</a>
+            <a href="/" class="text-xs text-gray-400 hover:text-white" style="font-size:12px; color:#94a3b8; text-decoration:none;">&larr; Return to Home</a>
           </div>
         </div>
       </div>
@@ -415,109 +524,54 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
   }
 
   modal.innerHTML = `
-    <!-- Main Google AI Studio Application Wrapper -->
+    <!-- Main Full-Screen AI Hardware Studio Application Shell -->
     <div class="google-ai-studio flex h-screen w-full bg-[#131314] text-[#e8eaed] overflow-hidden select-none" id="ai-studio-shell" style="display:flex; height:100vh; width:100%; background:#131314; color:#e8eaed; font-family:'Google Sans', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif; overflow:hidden; user-select:none;">
       
-      <!-- 1. Left Navigation Sidebar -->
-      <aside class="w-60 h-full bg-[#131314] border-r border-[#282a2d] flex flex-col justify-between p-3 shrink-0" style="width:235px; min-width:235px; height:100%; background:#131314; border-right:1px solid #282a2d; display:flex; flex-direction:column; justify-content:space-between; padding:12px; box-sizing:border-box; flex-shrink:0;">
-        <div class="space-y-3.5" style="display:flex; flex-direction:column; gap:14px;">
+      <!-- 1. Left Navigation Sidebar: Dedicated Project Labs + General Conversations -->
+      <aside class="w-64 h-full bg-[#131314] border-r border-[#282a2d] flex flex-col justify-between p-3 shrink-0" style="width:250px; min-width:250px; height:100%; background:#131314; border-right:1px solid #282a2d; display:flex; flex-direction:column; justify-content:space-between; padding:12px; box-sizing:border-box; flex-shrink:0;">
+        <div class="flex flex-col flex-1 min-h-0" style="display:flex; flex-direction:column; flex:1; min-height:0; gap:10px;">
           <!-- Brand Logo: Sparkle icon + The Innovation Hub -->
-          <div class="flex items-center space-x-2.5 px-2 py-1 cursor-pointer" style="display:flex; align-items:center; gap:8px; padding:4px 8px; cursor:pointer;" onclick="window.omniLabStudio.startNewBuild()">
+          <div class="flex items-center space-x-2.5 px-2 py-1 cursor-pointer" style="display:flex; align-items:center; gap:8px; padding:4px 8px; cursor:pointer;" onclick="window.omniLabStudio.createNewChat()">
             <svg class="w-4 h-4 text-[#4285f4]" style="width:18px; height:18px; color:#4285f4; flex-shrink:0;" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
             </svg>
             <div style="display:flex; flex-direction:column; line-height:1.2;">
               <span class="text-sm font-semibold tracking-normal text-white" style="font-size:14px; font-weight:600; color:#ffffff; line-height:1.2;">The Innovation Hub</span>
-              <span class="text-[10px] text-[#8ab4f8] font-mono uppercase tracking-wider" style="font-size:10px; color:#8ab4f8; letter-spacing:0.04em;">AI Studio</span>
+              <span class="text-[10px] text-[#8ab4f8] font-mono uppercase tracking-wider" style="font-size:10px; color:#8ab4f8; letter-spacing:0.04em;">AI Hardware Studio</span>
             </div>
           </div>
 
-          <!-- Get API Key Pill Button -->
-          <button class="btn-api-key w-full flex items-center justify-center space-x-2 rounded-full py-2 px-4 text-xs font-medium transition-colors cursor-pointer" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:transparent; border:1px solid #3c4043; color:#8ab4f8; border-radius:9999px; padding:7px 14px; font-size:12px; font-weight:500; cursor:pointer;" onclick="window.omniLabStudio.openSettingsModal()">
-            <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 2l-2 2m-1.5 1.5L16 7l-1.5-1.5-1.5 1.5 1.5 1.5-3 3-1.5-1.5L9 11.5l1.5 1.5L7 16l-4 4v2h2l4-4 2 2 3-3-1.5-1.5 1.5-1.5-1.5-1.5 3-3 1.5 1.5 1.5-1.5z"/>
-            </svg>
-            <span>Get API key</span>
+          <!-- + New Engineering Chat Button -->
+          <button class="w-full flex items-center justify-center space-x-2 rounded-xl py-2.5 px-4 text-xs font-semibold transition-all cursor-pointer shadow-sm" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:#202124; border:1px solid #3c4043; color:#ffffff; border-radius:10px; padding:9px 14px; font-size:12px; font-weight:600; cursor:pointer;" onclick="window.omniLabStudio.createNewChat()">
+            <svg class="w-4 h-4 text-[#8ab4f8]" style="width:16px; height:16px; color:#8ab4f8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>+ New Engineering Chat</span>
           </button>
 
-          <!-- Primary Navigation Items -->
-          <div class="space-y-1 text-xs" style="display:flex; flex-direction:column; gap:4px; font-size:12px;">
-            <button class="nav-active w-full flex items-center space-x-3 px-3 py-2 rounded-lg bg-[#282a2d] text-white font-medium text-left cursor-pointer border-0" style="width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; background:#282a2d; color:#ffffff; font-weight:500; border:none; cursor:pointer; text-align:left;" onclick="window.omniLabStudio.startNewBuild()">
-              <svg class="w-4 h-4 text-white" style="width:16px; height:16px; color:#ffffff;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-              <span>Create Prompt</span>
-            </button>
-            <button class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#202124] text-[#9aa0a6] hover:text-white transition-colors text-left cursor-pointer border-0 bg-transparent" style="width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; background:transparent !important; color:#9aa0a6; border:none; cursor:pointer; text-align:left;" onclick="window.omniLabStudio.triggerRealtimeStream()">
-              <svg class="w-4 h-4" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.93 4.93a10 10 0 0 1 14.14 0M7.76 7.76a6 6 0 0 1 8.48 0m-5.65 2.83a2 2 0 0 1 2.83 0"/></svg>
-              <span>Stream Realtime</span>
-            </button>
-            <button class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#202124] text-[#9aa0a6] hover:text-white transition-colors text-left cursor-pointer border-0 bg-transparent" style="width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; background:transparent !important; color:#9aa0a6; border:none; cursor:pointer; text-align:left;" onclick="window.location.href='projects.html'">
-              <svg class="w-4 h-4" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <span>Starter Apps</span>
-            </button>
-            <button class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#202124] text-[#9aa0a6] hover:text-white transition-colors text-left cursor-pointer border-0 bg-transparent" style="width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; background:transparent !important; color:#9aa0a6; border:none; cursor:pointer; text-align:left;" onclick="window.omniLabStudio.openSettingsModal()">
-              <svg class="w-4 h-4" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-              <span>Tune a Model</span>
-            </button>
-
-            <!-- Library & Architectures Section -->
-            <div class="pt-2 flex flex-col" style="padding-top:8px; display:flex; flex-direction:column;">
-              <div class="flex items-center justify-between px-2 py-1 text-[#9aa0a6] text-[11px] font-semibold uppercase tracking-wider" style="display:flex; align-items:center; justify-content:space-between; padding:4px 8px; color:#9aa0a6; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">
-                <div class="flex items-center space-x-1.5" style="display:flex; align-items:center; gap:6px;">
-                  <svg class="w-3.5 h-3.5 text-[#9aa0a6]" style="width:14px; height:14px; color:#9aa0a6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                  <span>Library</span>
-                </div>
-                <div class="flex items-center space-x-1" style="display:flex; align-items:center; gap:3px;">
-                  <button class="p-1 rounded hover:bg-[#202124] text-[#9aa0a6] hover:text-[#8ab4f8] transition-colors cursor-pointer" onclick="window.omniLabStudio.createFolderPrompt()" title="New Folder" style="padding:2px 4px; background:transparent !important; border:none; cursor:pointer; color:#9aa0a6;">
-                    <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
-                  </button>
-                  <button class="p-1 rounded hover:bg-[#202124] text-[#9aa0a6] hover:text-[#8ab4f8] transition-colors cursor-pointer" onclick="window.omniLabStudio.createNewChat()" title="New Architecture Chat" style="padding:2px 4px; background:transparent !important; border:none; cursor:pointer; color:#9aa0a6;">
-                    <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Search Filter Input -->
-              <div class="px-2 mb-1.5" style="padding:0 6px; margin-bottom:5px;">
-                <div class="flex items-center px-2 py-1 rounded bg-[#1e1f20] border border-[#282a2d] focus-within:border-[#8ab4f8]/50 text-xs" style="display:flex; align-items:center; gap:6px; padding:3px 8px; border-radius:6px; background:#1e1f20; border:1px solid #282a2d;">
-                  <svg class="w-3 h-3 text-[#5f6368]" style="width:11px; height:11px; color:#5f6368;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  <input type="text" placeholder="Filter chats &amp; folders..." class="w-full bg-transparent border-0 outline-none text-[11px] text-white placeholder-[#5f6368]" style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:11px; color:#ffffff; padding:1px;" oninput="window.omniLabStudio.filterHistory(this.value)" />
-                </div>
-              </div>
-
-              <!-- History Tree list -->
-              <div class="space-y-0.5 max-h-48 overflow-y-auto px-1" id="ai-studio-history-list" style="display:flex; flex-direction:column; gap:2px; max-height:190px; overflow-y:auto; padding:0 4px;">
-                ${renderHistoryItemsHTML()}
-              </div>
+          <!-- Search Filter Input -->
+          <div class="px-1" style="padding:0 2px;">
+            <div class="flex items-center px-2.5 py-1.5 rounded-lg bg-[#1e1f20] border border-[#282a2d] focus-within:border-[#8ab4f8]/50 text-xs" style="display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:8px; background:#1e1f20; border:1px solid #282a2d;">
+              <svg class="w-3.5 h-3.5 text-[#5f6368]" style="width:12px; height:12px; color:#5f6368;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" placeholder="Search projects &amp; chats..." class="w-full bg-transparent border-0 outline-none text-[11px] text-white placeholder-[#5f6368]" style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:11px; color:#ffffff; padding:1px;" oninput="window.omniLabStudio.filterHistory(this.value)" />
             </div>
+          </div>
 
-            <!-- Prompt Gallery Tab (Active Style) -->
-            <button class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg bg-[#282a2d] text-white font-medium text-left cursor-pointer border-0" style="width:100%; display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; background:#282a2d; color:#ffffff; border:none; cursor:pointer; text-align:left;" onclick="window.location.href='projects.html'">
-              <svg class="w-4 h-4 text-[#8ab4f8]" style="width:16px; height:16px; color:#8ab4f8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <span>Prompt Gallery</span>
-            </button>
+          <!-- History & Projects Scrollable List -->
+          <div class="flex-1 overflow-y-auto px-1 space-y-3 custom-scrollbar" id="ai-studio-history-list" style="flex:1; min-height:0; overflow-y:auto; padding:2px 2px; display:flex; flex-direction:column; gap:8px;">
+            ${renderHistoryItemsHTML()}
           </div>
         </div>
 
         <!-- Sidebar Footer -->
-        <div class="space-y-2 pt-2 border-t border-[#282a2d] text-xs" style="display:flex; flex-direction:column; gap:6px; border-top:1px solid #282a2d; padding-top:8px; font-size:12px;">
-          <a href="https://ai.google.dev/docs" target="_blank" class="flex items-center space-x-3 px-3 py-1 text-[#9aa0a6] hover:text-white transition-colors" style="display:flex; align-items:center; gap:8px; padding:4px 8px; color:#9aa0a6; text-decoration:none;">
-            <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span>API documentation</span>
+        <div class="pt-2 border-t border-[#282a2d] text-xs flex flex-col gap-1.5" style="border-top:1px solid #282a2d; padding-top:8px; display:flex; flex-direction:column; gap:6px; font-size:12px;">
+          <a href="/projects" class="flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-[#9aa0a6] hover:text-white hover:bg-[#202124] transition-colors" style="display:flex; align-items:center; gap:8px; padding:6px 8px; color:#9aa0a6; text-decoration:none; border-radius:6px;">
+            <svg class="w-4 h-4 text-[#8ab4f8]" style="width:15px; height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span style="font-size:12px; font-weight:500;">Explore All Projects (12)</span>
           </a>
-          <a href="https://discuss.ai.google.dev" target="_blank" class="flex items-center space-x-3 px-3 py-1 text-[#9aa0a6] hover:text-white transition-colors" style="display:flex; align-items:center; gap:8px; padding:4px 8px; color:#9aa0a6; text-decoration:none;">
-            <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span>Developer forum</span>
-          </a>
-          <div class="flex items-center space-x-2 px-3 py-1 text-[#9aa0a6]" style="display:flex; align-items:center; gap:6px; padding:4px 8px; color:#9aa0a6;">
-            <span>Changelog</span>
-            <span class="text-[9px] bg-[#1a73e8] text-white px-1.5 py-0.2 rounded font-semibold uppercase" style="font-size:9px; background:#1a73e8; color:#ffffff; padding:1px 5px; border-radius:3px; font-weight:600;">NEW</span>
-          </div>
-          <p class="text-[10px] text-[#5f6368] px-3 leading-tight" style="font-size:10px; color:#5f6368; padding:0 8px; line-height:1.3; margin:2px 0;">This experimental model is for feedback and testing only. No production use.</p>
           
-          <div class="flex items-center justify-between px-2 pt-1" style="display:flex; align-items:center; justify-content:space-between; padding:4px 8px;">
+          <div class="flex items-center justify-between px-2 pt-1" style="display:flex; align-items:center; justify-content:space-between; padding:2px 4px;">
             <button class="flex items-center space-x-2 text-[#9aa0a6] hover:text-white text-xs bg-transparent border-0 cursor-pointer p-1" style="display:flex; align-items:center; gap:6px; color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:12px;" onclick="window.omniLabStudio.openSettingsModal()">
-              <svg class="w-4 h-4" style="width:15px; height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              <span>Settings</span>
+              <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>API Settings</span>
             </button>
             <button class="text-[#9aa0a6] hover:text-white bg-transparent border-0 cursor-pointer p-1" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:14px;" onclick="window.omniLabStudio.toggleSidebar()" title="Collapse Sidebar">&lt;</button>
           </div>
@@ -526,24 +580,10 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
 
       <!-- 2. Central Main Workspace -->
       <main class="flex-1 h-full flex flex-col bg-[#131314] overflow-hidden min-w-0" style="flex:1 1 0%; height:100%; display:flex; flex-direction:column; background:#131314; overflow:hidden; min-width:0;">
-        <!-- Top Workspace Bar -->
-        <header class="h-12 border-b border-[#282a2d] px-5 flex items-center justify-between shrink-0" style="height:48px; border-bottom:1px solid #282a2d; padding:0 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
-          <div class="flex items-center space-x-2 cursor-pointer group" style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="window.omniLabStudio.renamePrompt()" title="Click to rename prompt">
-            <span class="text-sm text-white font-medium group-hover:text-[#8ab4f8] transition-colors" id="studio-active-title" style="font-size:14px; font-weight:500; color:#ffffff;">${escapeHtml(getActiveSession().title)}</span>
-            <svg class="w-3.5 h-3.5 text-[#9aa0a6] group-hover:text-white transition-colors" style="width:14px; height:14px; color:#9aa0a6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </div>
-
-          <div class="flex items-center space-x-3 text-xs" style="display:flex; align-items:center; gap:12px; font-size:12px;">
-            <button id="studio-compare-btn" class="flex items-center space-x-1.5 px-3 py-1 rounded bg-[#202124] hover:bg-[#282a2d] text-[#e8eaed] border border-[#3c4043] transition-colors cursor-pointer" style="display:flex; align-items:center; gap:6px; padding:4px 12px; border-radius:4px; background:#202124; color:#e8eaed; border:1px solid #3c4043; cursor:pointer;" onclick="window.omniLabStudio.toggleTargetBoard()" title="Toggle Target Architecture (${currentTargetBoard})">
-              <span class="text-[#8ab4f8]">→</span>
-              <span id="studio-compare-text">Compare (${currentTargetBoard})</span>
-            </button>
-            <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer text-base" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:16px;" onclick="window.omniLabStudio.startNewBuild()" title="Start New Session">⋮</button>
-            <!-- Dynamic User Avatar Button -->
-            <div id="studio-header-avatar-btn" class="w-7 h-7 rounded-full bg-[#0284c7] hover:bg-[#00f2fe] hover:text-black text-white flex items-center justify-center font-semibold text-xs cursor-pointer transition-colors shadow-sm" style="width:28px; height:28px; border-radius:50%; background:#0284c7; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; cursor:pointer;" title="${userTitle}" onclick="window.omniLabStudio.showAuthorInfo()">${userInitial}</div>
-            <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer ml-1 text-lg leading-none" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:18px;" onclick="if(window.omniLab?.closeAIArchitectModal && !window.location.pathname.includes('studio.html')){window.omniLab.closeAIArchitectModal();}else{window.location.href='projects.html';}" title="Exit Studio">&times;</button>
-          </div>
-        </header>
+        <!-- Top Workspace Bar Mount -->
+        <div id="studio-workspace-header-mount">
+          ${renderWorkspaceHeaderHTML()}
+        </div>
 
         <!-- Elevated Central Container Card (Google AI Studio canvas) -->
         <div class="flex-1 p-3 overflow-hidden flex flex-col" style="flex:1 1 0%; padding:12px; overflow:hidden; display:flex; flex-direction:column;">
@@ -767,77 +807,96 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
 
 function renderHistoryItemsHTML(): string {
   const q = historySearchQuery.trim().toLowerCase();
-  let sessions = [...chatSessions];
+  
+  // Separate into Project Laboratories and General Conversations
+  const projectSessions = chatSessions.filter(s => !!s.projectId);
+  const generalSessions = chatSessions.filter(s => !s.projectId);
+
+  let filteredProjects = projectSessions;
+  let filteredGeneral = generalSessions;
 
   if (q) {
-    sessions = sessions.filter(s =>
+    filteredProjects = filteredProjects.filter(s =>
+      s.title.toLowerCase().includes(q) ||
+      s.messages.some(m => m.content.toLowerCase().includes(q))
+    );
+    filteredGeneral = filteredGeneral.filter(s =>
       s.title.toLowerCase().includes(q) ||
       s.messages.some(m => m.content.toLowerCase().includes(q))
     );
   }
 
-  if (sessions.length === 0 && !q && studioFolders.length === 0) {
-    return `
-      <div class="text-[11px] text-[#5f6368] italic p-2.5 text-center">
-        No architectures created yet.
-      </div>
-    `;
-  }
+  // Sort pinned general sessions on top
+  filteredGeneral.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
   const htmlChunks: string[] = [];
 
-  // 1. Folders Section
-  studioFolders.forEach(folder => {
-    const folderSessions = sessions.filter(s => s.folderId === folder.id);
-    const count = folderSessions.length;
-    const isExpanded = folder.isExpanded !== false;
-
-    // Sort pinned on top
-    folderSessions.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-
-    htmlChunks.push(`
-      <div class="studio-folder-box">
-        <div class="studio-folder-header group" onclick="window.omniLabStudio.toggleFolderExpand('${folder.id}', event)">
-          <div class="flex items-center space-x-1.5 min-w-0 flex-1" style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
-            <span class="studio-folder-chevron ${isExpanded ? 'expanded' : ''}">▶</span>
-            <span style="font-size:12px;">📁</span>
-            <span class="truncate font-medium text-white/90" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px;">${escapeHtml(folder.name)}</span>
-            <span class="text-[10px] text-[#5f6368] font-mono">(${count})</span>
-          </div>
-          <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity" style="display:flex; align-items:center; gap:2px;">
-            <button class="studio-chat-action-btn" onclick="window.omniLabStudio.createNewChatInsideFolder('${folder.id}', event)" title="New Chat in ${escapeForAttr(folder.name)}">+</button>
-            <button class="studio-chat-action-btn" onclick="window.omniLabStudio.renameFolderPrompt('${folder.id}', event)" title="Rename Folder">✎</button>
-            <button class="studio-chat-action-btn text-[#5f6368] hover:text-red-400" onclick="window.omniLabStudio.deleteFolderPrompt('${folder.id}', event)" title="Delete Folder">&times;</button>
-          </div>
+  // Section 1: Project Laboratories
+  htmlChunks.push(`
+    <div class="studio-sidebar-section">
+      <div class="studio-sidebar-section-header" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:12px;">🔬</span>
+          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">Project Laboratories</span>
         </div>
-
-        ${isExpanded ? `
-          <div class="studio-folder-children">
-            ${folderSessions.length === 0 ? `
-              <div class="text-[10px] text-[#5f6368] italic px-2 py-1">Empty folder</div>
-            ` : folderSessions.map(s => renderSessionItemHTML(s)).join('')}
-          </div>
-        ` : ''}
+        <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#1e1f20] text-[#8ab4f8] font-mono border border-white/5 font-semibold">${filteredProjects.length}</span>
       </div>
-    `);
-  });
+      <div class="space-y-0.5" style="display:flex; flex-direction:column; gap:2px;">
+        ${filteredProjects.map(s => renderProjectSessionItemHTML(s)).join('')}
+      </div>
+    </div>
+  `);
 
-  // 2. Root Sessions (Sessions without folder or whose folder was removed)
-  const rootSessions = sessions.filter(s => !s.folderId || !studioFolders.some(f => f.id === s.folderId));
-  if (rootSessions.length > 0) {
-    if (studioFolders.length > 0) {
-      htmlChunks.push(`
-        <div class="text-[10px] uppercase font-mono text-[#5f6368] px-2 pt-1 pb-0.5 tracking-wider" style="font-size:10px; color:#5f6368; padding:4px 8px 2px 8px;">
-          Unorganized Chats
+  // Section 2: General Conversations
+  htmlChunks.push(`
+    <div class="studio-sidebar-section" style="margin-top:10px;">
+      <div class="studio-sidebar-section-header" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:12px;">💬</span>
+          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">General Chats</span>
         </div>
-      `);
-    }
-    // Sort pinned on top
-    rootSessions.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-    htmlChunks.push(...rootSessions.map(s => renderSessionItemHTML(s)));
-  }
+        <button class="p-1 rounded hover:bg-[#202124] text-[#8ab4f8] hover:text-white transition-colors cursor-pointer text-xs" onclick="window.omniLabStudio.createNewChat()" title="Start New Chat" style="background:transparent; border:none; cursor:pointer; font-weight:600; padding:1px 4px;">
+          + New Chat
+        </button>
+      </div>
+      <div class="space-y-0.5" style="display:flex; flex-direction:column; gap:2px;">
+        ${filteredGeneral.length === 0 ? `
+          <div class="text-[11px] text-[#5f6368] italic px-2 py-1.5">No general chats yet</div>
+        ` : filteredGeneral.map(s => renderSessionItemHTML(s)).join('')}
+      </div>
+    </div>
+  `);
 
   return htmlChunks.join('');
+}
+
+function renderProjectSessionItemHTML(s: ChatSession): string {
+  const isActive = s.id === activeSessionId;
+  const isESP = s.targetBoard === 'ESP32';
+  const boardColor = isESP ? '#38bdf8' : '#34d399';
+  const boardBg = isESP ? 'rgba(56, 189, 248, 0.12)' : 'rgba(52, 211, 153, 0.12)';
+
+  return `
+    <div 
+      class="studio-chat-session-item group ${isActive ? 'active' : ''}" 
+      onclick="window.omniLabStudio.switchSession('${s.id}')"
+      title="${escapeForAttr(s.title)}"
+      style="${isActive ? 'background: #282a2d !important; border-color: rgba(66, 133, 244, 0.4);' : ''}"
+    >
+      <div class="flex items-center space-x-2 min-w-0 flex-1" style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
+        <span style="font-size:11px;">⚡</span>
+        <span class="truncate ${isActive ? 'text-white font-medium' : 'text-[#bdc1c6]'}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px;">
+          ${escapeHtml(s.title)}
+        </span>
+      </div>
+
+      <div class="flex items-center space-x-1 shrink-0" style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+        <span style="font-size:9px; padding:1px 6px; border-radius:4px; font-family:monospace; font-weight:600; color:${boardColor}; background:${boardBg}; border:1px solid ${boardColor}33;">
+          ${s.targetBoard === 'ESP32' ? 'ESP32' : 'Uno'}
+        </span>
+      </div>
+    </div>
+  `;
 }
 
 function renderSessionItemHTML(s: ChatSession): string {
@@ -865,9 +924,6 @@ function renderSessionItemHTML(s: ChatSession): string {
         <div class="chat-actions">
           <button class="studio-chat-action-btn" onclick="window.omniLabStudio.togglePinSession('${s.id}', event)" title="${s.pinned ? 'Unpin' : 'Pin to top'}">
             ${s.pinned ? '★' : '📌'}
-          </button>
-          <button class="studio-chat-action-btn" onclick="window.omniLabStudio.openFolderPicker('${s.id}', event)" title="Move to Folder">
-            📁
           </button>
           <button class="studio-chat-action-btn" onclick="window.omniLabStudio.renameSession('${s.id}', event)" title="Rename">
             ✎
@@ -1305,6 +1361,7 @@ declare global {
       clearChat: () => void;
       toggleThought: (msgId: string) => void;
       inspectProject: (projectId: string) => void;
+      inspectActiveProject: () => void;
       copyCode: (projectId: string) => void;
       copyLatestCode: () => void;
       renamePrompt: () => void;
@@ -1359,6 +1416,9 @@ export function registerOmniLabStudioGlobals(
       if (sendBtn) sendBtn.disabled = true;
 
       const currentSession = getActiveSession();
+      const projectContext = currentSession.projectId
+        ? (projectsData.find(p => p.id === currentSession.projectId) || PROJECTS_DATA.find(p => p.id === currentSession.projectId) || getStudioProjectById(currentSession.projectId))
+        : undefined;
 
       // 1. Add User Message to Active Session
       const userMsgId = 'msg-' + Date.now();
@@ -1372,7 +1432,7 @@ export function registerOmniLabStudioGlobals(
       studioMessages = currentSession.messages;
 
       // Auto-title session on first user turn if untitled
-      if (currentSession.title === 'Untitled architecture' || currentSession.title === 'Untitled prompt' || currentSession.messages.length <= 2) {
+      if (!currentSession.projectId && (currentSession.title === 'Untitled architecture' || currentSession.title === 'Untitled prompt' || currentSession.messages.length <= 2)) {
         currentSession.title = prompt.length > 38 ? prompt.slice(0, 38) + '...' : prompt;
         const titleEl = document.getElementById('studio-active-title');
         if (titleEl) titleEl.textContent = currentSession.title;
@@ -1385,7 +1445,7 @@ export function registerOmniLabStudioGlobals(
         input.style.height = 'auto';
       }
 
-      const intent = detectPromptIntent(prompt);
+      const intent = detectPromptIntent(prompt, !!projectContext);
 
       if (intent === 'chat') {
         const assistantMsgId = 'msg-' + (Date.now() + 1);
@@ -1397,7 +1457,7 @@ export function registerOmniLabStudioGlobals(
           thoughtDuration: '0.4s',
           isStreaming: true,
           isChatThinking: true,
-          synthesisStatus: 'Consulting Hardware Engineering Knowledge Base...'
+          synthesisStatus: projectContext ? `Consulting ${projectContext.title} Hardware Specs...` : 'Consulting Hardware Engineering Knowledge Base...'
         };
         currentSession.messages.push(assistantMsg);
         studioMessages = currentSession.messages;
@@ -1428,7 +1488,7 @@ export function registerOmniLabStudioGlobals(
             .filter(m => !m.isStreaming && m.content)
             .map(m => ({ role: m.role, content: m.content }));
 
-          const chatRes = await generateAIChatResponse(prompt, history);
+          const chatRes = await generateAIChatResponse(prompt, history, projectContext);
           clearInterval(thinkTimer);
           const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
           assistantMsg.thoughtDuration = `${elapsed}s`;
@@ -1663,6 +1723,10 @@ export function registerOmniLabStudioGlobals(
         current.title = updated.trim();
         current.updatedAt = Date.now();
         saveStudioState();
+        const headerMount = document.getElementById('studio-workspace-header-mount');
+        if (headerMount) {
+          headerMount.innerHTML = renderWorkspaceHeaderHTML();
+        }
         const titleEl = document.getElementById('studio-active-title');
         if (titleEl) titleEl.textContent = current.title;
         const historyList = document.getElementById('ai-studio-history-list');
@@ -1687,12 +1751,14 @@ export function registerOmniLabStudioGlobals(
 
     copyLatestCode: () => {
       const current = getActiveSession();
-      const p = current.messages.find(m => m.project)?.project || getAllStudioProjects()[0] || projectsData[0];
+      const p = current.projectId
+        ? (projectsData.find(item => item.id === current.projectId) || PROJECTS_DATA.find(item => item.id === current.projectId) || getStudioProjectById(current.projectId))
+        : (current.messages.find(m => m.project)?.project || getAllStudioProjects()[0] || projectsData[0]);
       if (p?.code) {
         navigator.clipboard.writeText(p.code);
         showToast(`Copied ${p.title} C++ firmware to clipboard!`);
       } else {
-        showToast('Synthesize a build first to get firmware code.');
+        showToast('Firmware code not found for this project');
       }
     },
 
@@ -1768,6 +1834,10 @@ export function registerOmniLabStudioGlobals(
       studioMessages = newSession.messages;
       saveStudioState();
 
+      const headerMount = document.getElementById('studio-workspace-header-mount');
+      if (headerMount) {
+        headerMount.innerHTML = renderWorkspaceHeaderHTML();
+      }
       const stream = document.getElementById('ai-studio-chat-stream');
       if (stream) {
         stream.innerHTML = renderChatStreamHTML();
@@ -1804,6 +1874,10 @@ export function registerOmniLabStudioGlobals(
       studioMessages = target.messages;
       currentTargetBoard = target.targetBoard || 'ESP32';
 
+      const headerMount = document.getElementById('studio-workspace-header-mount');
+      if (headerMount) {
+        headerMount.innerHTML = renderWorkspaceHeaderHTML();
+      }
       const stream = document.getElementById('ai-studio-chat-stream');
       if (stream) {
         stream.innerHTML = renderChatStreamHTML();
@@ -1837,6 +1911,10 @@ export function registerOmniLabStudioGlobals(
         session.title = newName.trim();
         session.updatedAt = Date.now();
         saveStudioState();
+        const headerMount = document.getElementById('studio-workspace-header-mount');
+        if (headerMount) {
+          headerMount.innerHTML = renderWorkspaceHeaderHTML();
+        }
         const historyList = document.getElementById('ai-studio-history-list');
         if (historyList) {
           historyList.innerHTML = renderHistoryItemsHTML();
@@ -1853,6 +1931,34 @@ export function registerOmniLabStudioGlobals(
       if (e) e.stopPropagation();
       const session = chatSessions.find(s => s.id === sessionId);
       if (!session) return;
+
+      // Protect project laboratory sessions from deletion
+      if (session.projectId) {
+        if (!confirm(`Clear conversation history for "${session.title}" laboratory? (The project workbench will remain accessible)`)) return;
+        session.messages = [
+          {
+            id: 'msg-welcome-' + session.projectId,
+            role: 'assistant',
+            content: `### 🔬 **${session.title}** Engineering Laboratory\n\nWorkbench reset. How can I help you with this project today? Feel free to ask about wiring, code logic, or troubleshooting!`,
+            timestamp: 'Just now',
+            suggestions: [
+              { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+              { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
+              { label: '⚡ Power & Voltage', prompt: 'What are the power supply and voltage requirements?' },
+              { label: '🛠️ Troubleshooting Tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
+            ]
+          }
+        ];
+        if (activeSessionId === sessionId) {
+          studioMessages = session.messages;
+          const stream = document.getElementById('ai-studio-chat-stream');
+          if (stream) stream.innerHTML = renderChatStreamHTML();
+        }
+        saveStudioState();
+        showToast('Cleared project laboratory history');
+        return;
+      }
+
       if (!confirm(`Delete architecture "${session.title}"?`)) return;
 
       chatSessions = chatSessions.filter(s => s.id !== sessionId);
@@ -1874,6 +1980,8 @@ export function registerOmniLabStudioGlobals(
           activeSessionId = fallback.id;
           studioMessages = fallback.messages;
         }
+        const headerMount = document.getElementById('studio-workspace-header-mount');
+        if (headerMount) headerMount.innerHTML = renderWorkspaceHeaderHTML();
         const stream = document.getElementById('ai-studio-chat-stream');
         if (stream) stream.innerHTML = renderChatStreamHTML();
         const titleEl = document.getElementById('studio-active-title');
@@ -2052,6 +2160,20 @@ export function registerOmniLabStudioGlobals(
         window.omniLab.openModal(projectId);
       } else {
         showToast('Could not find hardware project specifications');
+      }
+    },
+
+    inspectActiveProject: () => {
+      const active = getActiveSession();
+      if (active.projectId) {
+        window.omniLabStudio.inspectProject(active.projectId);
+      } else {
+        const foundProject = active.messages.find(m => m.project)?.project;
+        if (foundProject) {
+          window.omniLabStudio.inspectProject(foundProject.id);
+        } else {
+          showToast('No project attached to this chat session');
+        }
       }
     },
 

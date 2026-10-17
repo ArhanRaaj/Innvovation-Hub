@@ -379,13 +379,24 @@ export interface ChatResponseResult {
   suggestions: ChatSuggestion[];
 }
 
-export function detectPromptIntent(prompt: string): PromptIntent {
+export function detectPromptIntent(prompt: string, isProjectContext = false): PromptIntent {
   const p = prompt.trim().toLowerCase();
+
+  // If chatting inside an existing project laboratory, ALWAYS default to conversational chat
+  // unless the engineer explicitly asks to synthesize a brand-new project
+  const isActionChip = /^\[⚡\s*build/i.test(p);
+  const isExplicitNewProject = /^build a new project\b/i.test(p) || /^create a new project\b/i.test(p);
+
+  if (isProjectContext) {
+    if (isActionChip || isExplicitNewProject) {
+      return 'synthesis';
+    }
+    return 'chat';
+  }
 
   // 1. Explicit project build / creation / synthesis triggers
   const startsWithBuild = /^(build|create|make|design|synthesize|generate|engineer)\b/i.test(p);
   const asksToBuild = /^(can you|please|could you)\s+(build|create|make|design|synthesize|generate)\b/i.test(p);
-  const isActionChip = /^\[⚡\s*build/i.test(p);
 
   // Diagnostic / troubleshooting / conversational terms ALWAYS mean chat
   const isQuestionOrTroubleshoot =
@@ -405,6 +416,12 @@ export function detectPromptIntent(prompt: string): PromptIntent {
     p.includes('broken') ||
     p.includes('stuck') ||
     p.includes('help') ||
+    p.includes('tell me') ||
+    p.includes('explain') ||
+    p.includes('show me') ||
+    p.includes('pins') ||
+    p.includes('wiring') ||
+    p.includes('code') ||
     p.startsWith('how') ||
     p.startsWith('why') ||
     p.startsWith('what') ||
@@ -445,12 +462,15 @@ You can inspect the full CAD schematic, pin routing table, and C++ source code b
 
 /**
  * Generates natural conversational answers, ideation, and troubleshooting.
+ * Supports dedicated projectContext to provide accurate, grounded assistance
+ * using real BOM, pin connections, and C++ firmware.
  */
 export async function generateAIChatResponse(
   prompt: string,
-  history?: { role: string; content: string }[]
+  history?: { role: string; content: string }[],
+  projectContext?: ScienceProject
 ): Promise<ChatResponseResult> {
-  const CHAT_SYSTEM_PROMPT = `You are the Lead Hardware Engineer and Robotics Mentor at The Innovation Hub.
+  let CHAT_SYSTEM_PROMPT = `You are the Lead Hardware Engineer and Robotics Mentor at The Innovation Hub.
 You talk naturally, warmly, conversationally, concisely, and intelligently like ChatGPT and Google Gemini.
 Guidelines:
 1. Talk like a friendly human engineer. Never recite corporate monologues, greetings reciting job roles, or robotic templates.
@@ -464,6 +484,35 @@ Guidelines:
    - An action tag at the end in this format: [⚡ Build Idea: <Title>]
 5. When explaining concepts (sensors, physics, protocols), explain the hardware operating mechanics, timing/voltage constraints (5V vs 3.3V, common ground), and provide an Arduino C++ snippet where relevant.
 6. Keep formatting clean with GitHub markdown.`;
+
+  if (projectContext) {
+    CHAT_SYSTEM_PROMPT += `
+
+ACTIVE PROJECT WORKBENCH CONTEXT:
+The user is currently inside the dedicated laboratory for: **${projectContext.title}**.
+- Microcontroller: ${projectContext.board} (${projectContext.board === 'ESP32' ? '3.3V Logic, Wi-Fi & BLE, dual-core 240MHz' : '5V Logic, 16MHz ATmega328P'})
+- Category: ${projectContext.category} | Difficulty: ${projectContext.difficulty}
+- Summary: ${projectContext.shortDesc}
+- Verified Bill of Materials (${projectContext.components.length} components):
+${projectContext.components.map(c => `  * ${c.name} (Qty: ${c.qty}) - ${c.note}`).join('\n')}
+- Complete Wiring Netlist (${projectContext.wiringTable.length} pin connections):
+${projectContext.wiringTable.map(w => `  * [${w.color}] ${w.from} -> ${w.to} (${w.desc})`).join('\n')}
+- Scientific Working Principle:
+${projectContext.workingPrinciple}
+- Compilable Arduino C++ Firmware:
+\`\`\`cpp
+${projectContext.code}
+\`\`\`
+
+IMPORTANT FOR THIS WORKBENCH:
+- You have complete visibility of this exact project's schematic, pinouts, BOM, and firmware.
+- Answer the user's questions specifically referencing THIS project's actual pin connections, hardware modules, and code functions.
+- If they ask about wiring, cite the exact pins from the wiring netlist above.
+- If they ask about firmware, explain the specific functions and variables from the code above.
+- If they ask for troubleshooting, identify potential issues for this specific board and modules (e.g., servo current draw, I2C pullups, ESP32 ADC2 Wi-Fi conflict).
+- Never output full project synthesis JSON unless explicitly told to 'build a new project from scratch'.
+- Speak naturally, concisely, and helpfully like a senior engineering mentor.`;
+  }
 
   try {
     const rawReply = await callLLMText(CHAT_SYSTEM_PROMPT, prompt, history);
@@ -482,24 +531,33 @@ Guidelines:
     }
 
     if (suggestions.length === 0) {
-      suggestions.push(
-        { label: 'Emotion Desk Robot', prompt: 'Build Emotion Desk Robot with ESP32' },
-        { label: 'Smart Watch', prompt: 'Build Smart Watch with ESP32' },
-        { label: 'Smart Dustbin', prompt: 'Build Touchless Smart Dustbin' }
-      );
+      if (projectContext) {
+        suggestions.push(
+          { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+          { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
+          { label: '⚡ Power & Decoupling', prompt: 'What are the power supply and voltage requirements?' },
+          { label: '🛠️ Troubleshooting Tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
+        );
+      } else {
+        suggestions.push(
+          { label: 'Emotion Desk Robot', prompt: 'Build Emotion Desk Robot with ESP32' },
+          { label: 'Smart Watch', prompt: 'Build Smart Watch with ESP32' },
+          { label: 'Smart Dustbin', prompt: 'Build Touchless Smart Dustbin' }
+        );
+      }
     }
 
     return {
       reply: rawReply,
       reasoning: [
-        'Analyzed user context and hardware parameters',
-        'Referenced embedded sensor libraries & circuit design standards',
+        projectContext ? `Referenced ${projectContext.title} hardware architecture and pinout netlist` : 'Analyzed user context and hardware parameters',
+        'Consulted embedded systems engineering knowledge base',
         'Synthesized conversational engineering guidance'
       ],
       suggestions
     };
   } catch {
-    return generateOfflineChatResponse(prompt, history);
+    return generateOfflineChatResponse(prompt, history, projectContext);
   }
 }
 
@@ -2385,9 +2443,273 @@ void loop() {
 // OFFLINE CONVERSATIONAL INTELLIGENCE & BRAINSTORMING ENGINE
 // ----------------------------------------------------------------------------
 
-function generateOfflineChatResponse(rawPrompt: string, history?: { role: string; content: string }[]): ChatResponseResult {
+function generateOfflineChatResponse(
+  rawPrompt: string,
+  history?: { role: string; content: string }[],
+  projectContext?: ScienceProject
+): ChatResponseResult {
   const p = rawPrompt.toLowerCase().trim();
 
+  // A. SPECIFIC PROJECT WORKBENCH DIALOGUE (When user is in a dedicated project chat)
+  if (projectContext) {
+    // 1. Social Greetings in Project Lab
+    if (/^(hi|hello|hey|yo|greetings|good\s+(morning|afternoon|evening)|how are you|how r u|sup)\b/i.test(p)) {
+      return {
+        reply: `### 👋 Hey! Welcome to the **${projectContext.title}** Lab!
+
+I've got the full hardware workbench open for this project:
+- **Processor**: **${projectContext.board}** (${projectContext.board === 'ESP32' ? '3.3V Logic, 240MHz' : '5V Logic, 16MHz'})
+- **BOM**: ${projectContext.components.length} verified hardware components
+- **Netlist**: ${projectContext.wiringTable.length} conductor pin connections
+- **Firmware**: Verified compilable Arduino C++ sketch
+
+What are you working on or trying to understand about this circuit? Feel free to ask about the wiring, code logic, or troubleshooting!`,
+        reasoning: [
+          `Detected greeting in dedicated project laboratory: ${projectContext.title}`,
+          'Hydrated project hardware parameters and wiring table',
+          'Offered specific engineering assistance for this schematic'
+        ],
+        suggestions: [
+          { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+          { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
+          { label: '⚡ Power & Decoupling', prompt: 'What are the power supply and voltage requirements?' },
+          { label: '🛠️ Troubleshooting Tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
+        ]
+      };
+    }
+
+    // 2. Wiring & Pin Connections Inquiry
+    if (
+      p.includes('wiring') ||
+      p.includes('pin') ||
+      p.includes('wire') ||
+      p.includes('connect') ||
+      p.includes('schematic') ||
+      p.includes('circuit') ||
+      p.includes('netlist')
+    ) {
+      const isESP = projectContext.board === 'ESP32';
+      const wiringRows = projectContext.wiringTable.map(w => 
+        `| **${w.from}** | **${w.to}** | \`${w.color}\` | ${w.desc} |`
+      ).join('\n');
+
+      return {
+        reply: `### 🔌 Conductor Pin Routing for **${projectContext.title}**
+
+Here is the exact hardware pinout netlist for this circuit using the **${projectContext.board}**:
+
+| Microcontroller Pin | Target Module Pin | Conductor Color | Net Description |
+| :--- | :--- | :--- | :--- |
+${wiringRows}
+
+---
+
+#### ⚡ Critical Electrical Rules:
+1. **Operating Voltage**: ${isESP ? 'The ESP32 runs strictly at **3.3V logic**. Ensure any 5V sensor modules use level shifters or resistor voltage dividers before feeding GPIO inputs.' : 'The Arduino Uno provides **5V logic** with robust 20mA drive per pin.'}
+2. **Common Ground**: All sensor, actuator, and driver GND lines **must connect together** with the ${projectContext.board} GND pin to establish a shared reference voltage.
+3. **Decoupling**: For servos or inductive motors, place a **100µF to 470µF electrolytic capacitor** across the power rails to absorb transient voltage dips and prevent micro-controller brownout resets.`,
+        reasoning: [
+          `Extracted ${projectContext.wiringTable.length} netlist records from ${projectContext.title}`,
+          'Formatted structured Markdown pin connection table',
+          `Added ${projectContext.board} voltage constraint warnings`
+        ],
+        suggestions: [
+          { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
+          { label: '📋 View BOM', prompt: 'Show me the bill of materials and components' },
+          { label: '🛠️ Common Issues', prompt: 'What are common wiring mistakes for this project?' }
+        ]
+      };
+    }
+
+    // 3. Firmware & Code Logic Inquiry
+    if (
+      p.includes('code') ||
+      p.includes('firmware') ||
+      p.includes('sketch') ||
+      p.includes('setup') ||
+      p.includes('loop') ||
+      p.includes('function') ||
+      p.includes('library') ||
+      p.includes('libraries') ||
+      p.includes('compile')
+    ) {
+      return {
+        reply: `### 💻 Firmware Architecture for **${projectContext.title}**
+
+This firmware is written in standard **Arduino C++** designed for the **${projectContext.board}**.
+
+#### 🧱 Code Structure Overview:
+1. **Hardware Pin Definitions & Library Includes**: All GPIO pins are assigned as constants matching the schematic netlist.
+2. **\`setup()\` Initialization**: Initializes serial telemetry, configures digital input/output pin modes, and arms sensor peripherals.
+3. **\`loop()\` Execution Engine**: Continuously samples sensor telemetry, processes the control algorithm, and updates actuators with non-blocking delays.
+
+\`\`\`cpp
+${projectContext.code}
+\`\`\`
+
+#### 💡 Compilation & Flashing Tips:
+- Select **${projectContext.board}** in Arduino IDE under \`Tools -> Board\`.
+- Set baud rate in Serial Monitor to match \`Serial.begin(...)\` in setup.
+- If flashing on ESP32, hold the **BOOT** button down when uploading if your board does not have auto-reset circuitry.`,
+        reasoning: [
+          `Retrieved compilable C++ source code for ${projectContext.title}`,
+          'Annotated functional blocks: setup, loop, telemetry, and pin configuration',
+          'Added compilation and flashing checklist'
+        ],
+        suggestions: [
+          { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+          { label: '⚡ Voltage & Power', prompt: 'What power supply do I need for this project?' },
+          { label: '🛠️ Troubleshooting', prompt: 'My code uploaded but the circuit is not responding. How do I fix it?' }
+        ]
+      };
+    }
+
+    // 4. Bill of Materials (BOM) & Components Inquiry
+    if (
+      p.includes('bom') ||
+      p.includes('component') ||
+      p.includes('part') ||
+      p.includes('materials') ||
+      p.includes('buy') ||
+      p.includes('shopping')
+    ) {
+      const compRows = projectContext.components.map((c, i) => 
+        `| ${i + 1} | **${c.name}** | \`${c.qty}\` | ${c.note} |`
+      ).join('\n');
+
+      return {
+        reply: `### 📋 Bill of Materials for **${projectContext.title}**
+
+Here is the complete parts manifest required to assemble this build:
+
+| # | Component / Part Name | Qty | Technical Specification / Note |
+| :---: | :--- | :---: | :--- |
+${compRows}
+
+> 💡 **Lab Recommendation**: Always use 22 AWG solid-core DuPont jumper wires for reliable breadboard contact resistance.`,
+        reasoning: [
+          `Hydrated BOM records for ${projectContext.title}`,
+          'Organized into clean tabular hardware manifest',
+          'Included technical notes and quantities'
+        ],
+        suggestions: [
+          { label: '🔌 How to Wire', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+          { label: '💻 How Code Works', prompt: 'Explain how the firmware code works step-by-step' },
+          { label: '⚡ Power Source', prompt: 'What power supply do I need for this project?' }
+        ]
+      };
+    }
+
+    // 5. Scientific Principles & Working Theory Inquiry
+    if (
+      p.includes('principle') ||
+      p.includes('working') ||
+      p.includes('how does it work') ||
+      p.includes('science') ||
+      p.includes('physics') ||
+      p.includes('theory') ||
+      p.includes('fair')
+    ) {
+      return {
+        reply: `### 🔬 Scientific Working Principle: **${projectContext.title}**
+
+#### 📐 Core Operating Mechanics:
+${projectContext.workingPrinciple}
+
+---
+
+#### 🌍 Real-World Engineering Applications:
+${projectContext.scientificApplications}
+
+> 🏆 **Science Fair Presentation Tip**: State your scientific hypothesis clearly, document your independent variable (e.g. distance/light/load) and dependent variable (e.g. voltage/servo position/response time), and display a live sensor telemetry chart!`,
+        reasoning: [
+          `Analyzed scientific mechanics of ${projectContext.title}`,
+          'Derived sensor physics, math formulas, and control principles',
+          'Supplied science fair presentation tips'
+        ],
+        suggestions: [
+          { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+          { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
+          { label: '🛠️ Troubleshooting', prompt: 'What are common issues and troubleshooting tips for this build?' }
+        ]
+      };
+    }
+
+    // 6. Troubleshooting & Diagnostics Inquiry
+    if (
+      p.includes('troubleshoot') ||
+      p.includes('jitter') ||
+      p.includes('error') ||
+      p.includes('not working') ||
+      p.includes("isn't working") ||
+      p.includes("doesn't work") ||
+      p.includes('problem') ||
+      p.includes('stuck') ||
+      p.includes('broken') ||
+      p.includes('brownout') ||
+      p.includes('restart') ||
+      p.includes('reboot') ||
+      p.includes('fix')
+    ) {
+      const isESP = projectContext.board === 'ESP32';
+      return {
+        reply: `### 🛠️ Hardware Diagnostic & Troubleshooting Guide: **${projectContext.title}**
+
+Here are the top root causes and solutions for issues with this specific circuit:
+
+#### 1. ⚡ Power Rail Brownout & Unexpected Reboots
+- **Symptom**: Microcontroller reboots or hangs the instant a servo, motor, relay, or Wi-Fi radio activates.
+- **Root Cause**: Inductive load inrush current draws more power than the USB port or board voltage regulator can supply.
+- **Fix**: Power your high-current modules (servos, pumps, buzzers) from an **external 5V 2A power supply**. Connect the external power GND to ${projectContext.board} GND. Add a **470µF 16V capacitor** across +5V and GND.
+
+#### 2. 🔌 Ground Loop & Floating Signal Pins
+- **Symptom**: Unstable or jittery analog readings, ghost button triggers.
+- **Root Cause**: Missing common ground reference.
+- **Fix**: Verify every single GND pin connects to the same central bus. Ensure digital inputs have pull-up (\`INPUT_PULLUP\`) or 10k pull-down resistors.
+
+#### 3. 📡 Communication Bus Collisions
+- **Symptom**: I2C OLED or SPI reader not recognized, returning 0x00 or \`No device found\`.
+- **Fix**: Check that SDA & SCL / MOSI & MISO pins aren't swapped. Run an I2C scanner sketch to verify the module address (typically \`0x3C\` or \`0x27\`).
+
+${isESP ? '#### 4. 📶 ESP32 ADC2 & Wi-Fi Conflict\n- Remember: GPIOs on ADC2 (pins 0, 2, 4, 12-15, 25-27) cannot be used for analog reads when Wi-Fi is active. Use ADC1 pins (GPIO 32-39) instead.' : ''}
+
+Would you like me to inspect a specific error message or pin behavior?`,
+        reasoning: [
+          `Generated hardware diagnostic checklist tailored for ${projectContext.board} and ${projectContext.title}`,
+          'Identified power brownout, ground reference, and signal bus failure modes'
+        ],
+        suggestions: [
+          { label: '🔌 Check Wiring Table', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+          { label: '💻 Review Firmware Code', prompt: 'Explain how the firmware code works step-by-step' },
+          { label: '⚡ Power Decoupling', prompt: 'What are the power supply and voltage requirements?' }
+        ]
+      };
+    }
+
+    // Default conversational reply inside project lab
+    return {
+      reply: `### 💡 **${projectContext.title}** Notes
+
+Regarding **"${rawPrompt}"**:
+
+In this build, the **${projectContext.board}** coordinates all sensor acquisition and actuator timing. 
+- You can inspect the real-time wiring netlist in the **Schematic** tab.
+- All hardware libraries and pin assignments are fully initialized in the C++ firmware.
+
+Feel free to ask me to explain any specific pin, modify the code, or walk through the hardware assembly!`,
+      reasoning: [
+        `Grounded response in active project laboratory: ${projectContext.title}`,
+        'Referenced project MCU and active telemetry pipeline'
+      ],
+      suggestions: [
+        { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+        { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
+        { label: '📋 View Parts BOM', prompt: 'Show me the bill of materials and components' }
+      ]
+    };
+  }
+
+  // B. GENERAL CONVERSATIONAL ENGINE (When outside a specific project)
   // 1. Social Greetings & Introduction
   if (/^(hi|hello|hey|yo|greetings|good\s+(morning|afternoon|evening)|who are you|what can you do|help|how are you|how r u|sup)\b/i.test(p)) {
     return {

@@ -582,7 +582,26 @@ export function filterAndRender(
   if (telemetry) telemetry.style.display = 'flex';
 
   const userProjects = authService.getUserProjects(currentUser.id);
-  let list: ScienceProject[] = [...userProjects];
+  let list: ScienceProject[];
+  if (state.accountScope === 'my-projects') {
+    list = [...userProjects];
+  } else if (state.accountScope === 'curated') {
+    list = allProjects.filter(p => !p.userId || p.userId === 'curated');
+  } else {
+    // Show all projects: user created projects + 12 curated projects
+    const seenIds = new Set<string>();
+    list = [];
+    for (const p of userProjects) {
+      seenIds.add(p.id);
+      list.push(p);
+    }
+    for (const p of allProjects) {
+      if (!seenIds.has(p.id)) {
+        seenIds.add(p.id);
+        list.push(p);
+      }
+    }
+  }
 
   // Board Filter
   if (state.currentBoard !== 'all') {
@@ -639,14 +658,11 @@ export function renderCategoryChips(
   const mount = document.getElementById('category-chips');
   if (!mount) return;
 
-  const currentUser = authService.getCurrentUser();
-  const activeProjects = currentUser ? authService.getUserProjects(currentUser.id) : [];
-
   mount.innerHTML = CATEGORIES.map(cat => {
     const isActive = state.currentCategory === cat;
     const count = cat === 'All Categories'
-      ? activeProjects.length
-      : activeProjects.filter(p => p.category === cat).length;
+      ? allProjects.length
+      : allProjects.filter(p => p.category === cat).length;
 
     return `
       <button class="cat-chip ${isActive ? 'active' : ''}" data-category="${cat}">
@@ -665,12 +681,13 @@ export function renderCategoryChips(
   });
 }
 
-export function syncDynamicCounts(_allProjects: ScienceProject[]): void {
+export function syncDynamicCounts(allProjects: ScienceProject[]): void {
   const currentUser = authService.getCurrentUser();
-  const activeProjects = currentUser ? authService.getUserProjects(currentUser.id) : [];
-  const total = activeProjects.length;
-  const uno = activeProjects.filter(p => p.board.toLowerCase().includes('arduino')).length;
-  const esp = activeProjects.filter(p => p.board.toLowerCase().includes('esp32')).length;
+  const userProjects = currentUser ? authService.getUserProjects(currentUser.id) : [];
+
+  const total = allProjects.length;
+  const uno = allProjects.filter(p => p.board.toLowerCase().includes('arduino')).length;
+  const esp = allProjects.filter(p => p.board.toLowerCase().includes('esp32')).length;
 
   const statTotal = document.getElementById('stat-total-count');
   const statUno = document.getElementById('stat-uno-count');
@@ -685,6 +702,11 @@ export function syncDynamicCounts(_allProjects: ScienceProject[]): void {
   if (badgeAll) badgeAll.textContent = total.toString();
   if (badgeUno) badgeUno.textContent = uno.toString();
   if (badgeEsp) badgeEsp.textContent = esp.toString();
+
+  const scopeCurated = document.getElementById('scope-curated-count');
+  const scopeMy = document.getElementById('scope-my-count');
+  if (scopeCurated) scopeCurated.textContent = allProjects.filter(p => !p.userId || p.userId === 'curated').length.toString();
+  if (scopeMy) scopeMy.textContent = userProjects.length.toString();
 }
 
 function truncateString(str: string, num: number): string {

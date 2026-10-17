@@ -5,7 +5,23 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      {
+        name: 'clean-urls-dev',
+        configureServer(server) {
+          server.middlewares.use((req, _res, next) => {
+            if (req.url === '/projects') req.url = '/projects.html';
+            else if (req.url?.startsWith('/projects?')) req.url = '/projects.html?' + req.url.split('?')[1];
+            else if (req.url === '/studio') req.url = '/studio.html';
+            else if (req.url?.startsWith('/studio?')) req.url = '/studio.html?' + req.url.split('?')[1];
+            else if (req.url === '/project') req.url = '/project.html';
+            else if (req.url?.startsWith('/project?')) req.url = '/project.html?' + req.url.split('?')[1];
+            next();
+          });
+        }
+      }
+    ],
     envPrefix: ['VITE_', 'GEMINI_', 'GROQ_', 'OPENROUTER_', 'SUPABASE_'],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || ''),

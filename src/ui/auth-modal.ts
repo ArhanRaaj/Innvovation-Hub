@@ -20,6 +20,7 @@ declare global {
       closeProfileDropdown: () => void;
       goToMyProjects: () => void;
       goToAIStudio: () => void;
+      togglePasswordVisibility: (inputId: string) => void;
     };
   }
 }
@@ -64,24 +65,23 @@ export function initAuthUI(): void {
     closeProfileDropdown,
     goToMyProjects: () => {
       closeProfileDropdown();
-      const isProjectsPage = window.location.pathname.includes('projects.html');
+      const isProjectsPage = window.location.pathname.includes('/projects') || window.location.pathname.includes('projects.html');
       if (isProjectsPage) {
         if ((window as any).omniLabScope) {
           (window as any).omniLabScope.setScope('my-projects');
         }
       } else {
-        window.location.href = 'projects.html?scope=my-projects';
+        window.location.href = '/projects?scope=my-projects';
       }
     },
     goToAIStudio: () => {
       closeProfileDropdown();
-      if (window.location.pathname.includes('studio.html')) {
-        // already here
-      } else if (window.omniLab?.openAIArchitectModal) {
-        window.omniLab.openAIArchitectModal();
-      } else {
-        window.location.href = 'studio.html';
-      }
+      window.location.href = '/studio';
+    },
+    togglePasswordVisibility: (inputId: string) => {
+      const input = document.getElementById(inputId) as HTMLInputElement | null;
+      if (!input) return;
+      input.type = input.type === 'password' ? 'text' : 'password';
     }
   };
 }
@@ -149,12 +149,17 @@ function updateModalContent(): void {
 
 function renderSignInView(mount: HTMLElement): void {
   mount.innerHTML = `
+    <div class="auth-tabs-segmented">
+      <button type="button" class="auth-seg-tab active" onclick="window.innovationHubAuth.switchTab('signin')">Sign In</button>
+      <button type="button" class="auth-seg-tab" onclick="window.innovationHubAuth.switchTab('register')">Create Account</button>
+    </div>
+
     <div class="auth-brand-kicker">
       <span class="auth-kicker-dot"></span>
       <span>THE INNOVATION HUB &bull; HARDWARE ACCESS</span>
     </div>
     <h2 class="auth-modal-title">Sign In to Your Laboratory</h2>
-    <p class="auth-modal-desc">Access your private hardware projects, custom schematics, and AI Studio sessions.</p>
+    <p class="auth-modal-desc">Access your hardware projects, custom schematics, and individual AI project chats.</p>
 
     <form onsubmit="window.innovationHubAuth.handleLogin(event)" class="auth-form" id="auth-signin-form">
       <div id="auth-error-msg" class="auth-error-banner" style="display:none;"></div>
@@ -163,7 +168,7 @@ function renderSignInView(mount: HTMLElement): void {
         <label for="signin-email">Email Address</label>
         <div class="auth-input-wrap">
           <svg class="auth-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          <input type="email" id="signin-email" placeholder="name@domain.com" required autocomplete="email" />
+          <input type="email" id="signin-email" placeholder="engineer@domain.com" required autocomplete="email" />
         </div>
       </div>
 
@@ -172,6 +177,9 @@ function renderSignInView(mount: HTMLElement): void {
         <div class="auth-input-wrap">
           <svg class="auth-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <input type="password" id="signin-password" placeholder="••••••••" required autocomplete="current-password" />
+          <button type="button" class="auth-pwd-toggle" onclick="window.innovationHubAuth.togglePasswordVisibility('signin-password')" title="Toggle password visibility">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
         </div>
       </div>
 
@@ -182,20 +190,25 @@ function renderSignInView(mount: HTMLElement): void {
     </form>
 
     <div class="auth-switch-row">
-      <span>Don't have an account yet?</span>
-      <button type="button" class="auth-switch-link" onclick="window.innovationHubAuth.switchTab('register')">Create an account</button>
+      <span>New hardware engineer?</span>
+      <button type="button" class="auth-switch-link" onclick="window.innovationHubAuth.switchTab('register')">Create an account &rarr;</button>
     </div>
   `;
 }
 
 function renderRegisterView(mount: HTMLElement): void {
   mount.innerHTML = `
+    <div class="auth-tabs-segmented">
+      <button type="button" class="auth-seg-tab" onclick="window.innovationHubAuth.switchTab('signin')">Sign In</button>
+      <button type="button" class="auth-seg-tab active" onclick="window.innovationHubAuth.switchTab('register')">Create Account</button>
+    </div>
+
     <div class="auth-brand-kicker">
       <span class="auth-kicker-dot"></span>
       <span>THE INNOVATION HUB &bull; NEW BUILDER</span>
     </div>
     <h2 class="auth-modal-title">Create Engineer Account</h2>
-    <p class="auth-modal-desc">Save your personal AI hardware builds, custom wiring netlists, and private chat histories.</p>
+    <p class="auth-modal-desc">Instant cloud access to AI Hardware Studio, circuit synthesizers, and individual project chats.</p>
 
     <form onsubmit="window.innovationHubAuth.handleRegister(event)" class="auth-form" id="auth-register-form">
       <div id="auth-error-msg" class="auth-error-banner" style="display:none;"></div>
@@ -221,6 +234,9 @@ function renderRegisterView(mount: HTMLElement): void {
         <div class="auth-input-wrap">
           <svg class="auth-field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <input type="password" id="reg-password" placeholder="••••••••" required minlength="6" autocomplete="new-password" />
+          <button type="button" class="auth-pwd-toggle" onclick="window.innovationHubAuth.togglePasswordVisibility('reg-password')" title="Toggle password visibility">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
         </div>
       </div>
 
@@ -232,7 +248,7 @@ function renderRegisterView(mount: HTMLElement): void {
 
     <div class="auth-switch-row">
       <span>Already have an account?</span>
-      <button type="button" class="auth-switch-link" onclick="window.innovationHubAuth.switchTab('signin')">Sign in instead</button>
+      <button type="button" class="auth-switch-link" onclick="window.innovationHubAuth.switchTab('signin')">Sign in here &rarr;</button>
     </div>
   `;
 }
@@ -389,15 +405,15 @@ async function handleRegister(e: Event): Promise<void> {
 // NAVBAR PILL & DROPDOWN INJECTION
 // ============================================================================
 export function mountAuthNavbarPill(): void {
-  const navWrap = document.querySelector('.site-header .nav-wrap');
-  if (!navWrap) return;
+  const container = document.querySelector('.site-header .nav-right-actions') || document.querySelector('.site-header .nav-wrap');
+  if (!container) return;
 
   let mount = document.getElementById('nav-auth-mount');
   if (!mount) {
     mount = document.createElement('div');
     mount.id = 'nav-auth-mount';
     mount.className = 'nav-auth-container';
-    navWrap.appendChild(mount);
+    container.appendChild(mount);
   }
 
   const user = authService.getCurrentUser();
