@@ -131,11 +131,12 @@ Return ONLY the complete updated project JSON object with no markdown fences.
 // ----------------------------------------------------------------------------
 async function callLLM(systemPrompt: string, userPrompt: string): Promise<string> {
   const settings = getAISettings();
-  const groqKeys = settings.apiKey && settings.provider === 'groq' ? [settings.apiKey, ...DEFAULT_GROQ_KEYS] : DEFAULT_GROQ_KEYS;
-  const orKeys = settings.apiKey && settings.provider === 'openrouter' ? [settings.apiKey, ...DEFAULT_OPENROUTER_KEYS] : DEFAULT_OPENROUTER_KEYS;
+  const provider = inferProvider(settings.provider, settings.apiKey);
+  const groqKeys = settings.apiKey && provider === 'groq' ? [settings.apiKey, ...DEFAULT_GROQ_KEYS] : DEFAULT_GROQ_KEYS;
+  const orKeys = settings.apiKey && provider === 'openrouter' ? [settings.apiKey, ...DEFAULT_OPENROUTER_KEYS] : DEFAULT_OPENROUTER_KEYS;
 
   // 1. Try Groq (Ultra-fast inference)
-  if (settings.provider === 'groq' || settings.provider === 'auto') {
+  if (provider === 'groq' || provider === 'auto') {
     for (const key of groqKeys) {
       if (!key) continue;
       try {
@@ -170,7 +171,7 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
   }
 
   // 2. Try OpenRouter
-  if (settings.provider === 'openrouter' || settings.provider === 'auto') {
+  if (provider === 'openrouter' || provider === 'auto') {
     for (const key of orKeys) {
       if (!key) continue;
       try {
@@ -207,7 +208,7 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
   }
 
   // 3. Try Google Gemini if custom key provided
-  if ((settings.provider === 'gemini' || settings.provider === 'auto') && settings.apiKey.startsWith('AIza')) {
+  if ((provider === 'gemini' || provider === 'auto') && settings.apiKey.startsWith('AIza')) {
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${settings.apiKey}`, {
         method: 'POST',
@@ -247,8 +248,9 @@ async function callLLMText(
   history?: { role: string; content: string }[]
 ): Promise<string> {
   const settings = getAISettings();
-  const groqKeys = settings.apiKey && settings.provider === 'groq' ? [settings.apiKey, ...DEFAULT_GROQ_KEYS] : DEFAULT_GROQ_KEYS;
-  const orKeys = settings.apiKey && settings.provider === 'openrouter' ? [settings.apiKey, ...DEFAULT_OPENROUTER_KEYS] : DEFAULT_OPENROUTER_KEYS;
+  const provider = inferProvider(settings.provider, settings.apiKey);
+  const groqKeys = settings.apiKey && provider === 'groq' ? [settings.apiKey, ...DEFAULT_GROQ_KEYS] : DEFAULT_GROQ_KEYS;
+  const orKeys = settings.apiKey && provider === 'openrouter' ? [settings.apiKey, ...DEFAULT_OPENROUTER_KEYS] : DEFAULT_OPENROUTER_KEYS;
 
   const chatMessages = [
     { role: 'system', content: systemPrompt },
@@ -260,7 +262,7 @@ async function callLLMText(
   ];
 
   // 1. Try Groq (Ultra-fast chat inference)
-  if (settings.provider === 'groq' || settings.provider === 'auto') {
+  if (provider === 'groq' || provider === 'auto') {
     for (const key of groqKeys) {
       if (!key) continue;
       try {
@@ -291,7 +293,7 @@ async function callLLMText(
   }
 
   // 2. Try OpenRouter
-  if (settings.provider === 'openrouter' || settings.provider === 'auto') {
+  if (provider === 'openrouter' || provider === 'auto') {
     for (const key of orKeys) {
       if (!key) continue;
       try {
@@ -324,7 +326,7 @@ async function callLLMText(
   }
 
   // 3. Try Google Gemini if custom key provided
-  if ((settings.provider === 'gemini' || settings.provider === 'auto') && settings.apiKey.startsWith('AIza')) {
+  if ((provider === 'gemini' || provider === 'auto') && settings.apiKey.startsWith('AIza')) {
     try {
       const contents = [
         ...(history || []).slice(-8).map(m => ({
@@ -361,6 +363,14 @@ async function callLLMText(
   }
 
   throw new Error('No live LLM key connected; fallback to offline conversational engine.');
+}
+
+function inferProvider(provider: AIProvider, apiKey: string): AIProvider {
+  if (provider !== 'auto') return provider;
+  if (apiKey.startsWith('AIza')) return 'gemini';
+  if (apiKey.startsWith('gsk_')) return 'groq';
+  if (apiKey.startsWith('sk-or-')) return 'openrouter';
+  return 'auto';
 }
 
 // ----------------------------------------------------------------------------

@@ -1,0 +1,213 @@
+/* Dedicated AI Studio: calm, readable chat workspace */
+.studio-page {
+  --studio-ink: #172235;
+  --studio-muted: #728096;
+  --studio-line: #e5eaf1;
+  --studio-blue: #2563eb;
+  --studio-canvas: #f7f9fc;
+  background: var(--studio-canvas) !important;
+  color: var(--studio-ink) !important;
+  font-family: 'Google Sans', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+.studio-page #ai-studio-shell {
+  background: var(--studio-canvas) !important;
+  color: var(--studio-ink) !important;
+  font-family: inherit !important;
+  user-select: text !important;
+}
+
+.studio-page #ai-studio-shell > aside {
+  width: 276px !important;
+  min-width: 276px !important;
+  padding: 20px 14px 14px !important;
+  background: #111b2b !important;
+  border-right: 1px solid #25334a !important;
+  color: #eaf0fa !important;
+}
+
+.studio-page #ai-studio-shell > aside input { color: #f3f6fb !important; }
+.studio-page #ai-studio-shell > aside input::placeholder { color: #8794a8 !important; }
+.studio-page #ai-studio-shell > aside button,
+.studio-page #ai-studio-shell > aside a { transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease !important; }
+.studio-page #ai-studio-shell > aside > div:first-child > button {
+  min-height: 42px !important;
+  justify-content: flex-start !important;
+  padding: 10px 14px !important;
+  background: #2563eb !important;
+  border: 1px solid #3776fa !important;
+  border-radius: 11px !important;
+  box-shadow: 0 7px 18px #07162d66 !important;
+}
+.studio-page #ai-studio-shell > aside > div:first-child > button:hover { background: #3475f5 !important; transform: translateY(-1px); }
+.studio-page #ai-studio-shell > aside > div:first-child > div:nth-of-type(2) > div {
+  background: #182438 !important;
+  border: 1px solid #2d3b50 !important;
+  border-radius: 10px !important;
+}
+.studio-page #ai-studio-shell .studio-sidebar-section-header { color: #a9b5c7 !important; }
+.studio-page #ai-studio-shell .studio-sidebar-section-header span { color: inherit !important; }
+.studio-page #ai-studio-shell .studio-section-mark {
+  display: inline-grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 1px solid #34445b;
+  border-radius: 6px;
+  background: #1b2a40;
+  color: #9fb6d6;
+  font-size: 9px !important;
+  font-weight: 700;
+}
+.studio-page #ai-studio-shell .studio-session-mark { color: #8295b0 !important; font-size: 17px !important; }
+.studio-page #ai-studio-shell .studio-chat-session-item {
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  min-height: 36px !important;
+  padding: 7px 8px !important;
+  color: #c1ccdc !important;
+}
+.studio-page #ai-studio-shell .studio-chat-session-item:hover { background: #1c2a40 !important; }
+.studio-page #ai-studio-shell .studio-chat-session-item.active {
+  background: #203553 !important;
+  border-color: #355477 !important;
+}
+.studio-page #ai-studio-shell .studio-chat-session-item .truncate { color: #e7edf7 !important; }
+.studio-page #ai-studio-shell > aside > div:last-child { border-color: #2a394f !important; }
+.studio-page #ai-studio-shell > aside > div:last-child a,
+.studio-page #ai-studio-shell > aside > div:last-child button { color: #a9b5c7 !important; }
+.studio-page #ai-studio-shell > aside > div:last-child a:hover,
+.studio-page #ai-studio-shell > aside > div:last-child button:hover { color: #fff !important; }
+
+.studio-page #ai-studio-shell > main {
+  background: var(--studio-canvas) !important;
+}
+.studio-page #studio-workspace-header {
+  height: 62px !important;
+  padding: 0 30px !important;
+  background: rgba(255,255,255,.92) !important;
+  border-bottom: 1px solid var(--studio-line) !important;
+  color: var(--studio-ink) !important;
+  backdrop-filter: blur(14px);
+}
+.studio-page #studio-workspace-header #studio-active-title { color: var(--studio-ink) !important; }
+.studio-page #studio-workspace-header button {
+  background: #fff !important;
+  border-color: #dce3ed !important;
+  color: #34445b !important;
+  border-radius: 9px !important;
+}
+.studio-page #studio-workspace-header button:hover { background: #f2f6fc !important; }
+
+.studio-page #ai-studio-chat-stream {
+  padding: 34px 28px 22px !important;
+  background: radial-gradient(ellipse at 50% 0%, #fff 0, #f7f9fc 64%) !important;
+  scrollbar-gutter: stable;
+}
+.studio-page #ai-studio-chat-stream > div { max-width: 790px !important; }
+.studio-page #ai-studio-chat-stream h1 { color: #172235 !important; font-size: clamp(29px, 3.3vw, 38px) !important; letter-spacing: -.045em !important; }
+.studio-page #ai-studio-chat-stream > div > p { color: #64748b !important; }
+.studio-page #ai-studio-chat-stream [onclick*="selectStarter"] {
+  background: #fff !important;
+  border: 1px solid #e3e9f1 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 3px 12px #1c35550a !important;
+}
+.studio-page #ai-studio-chat-stream [onclick*="selectStarter"]:hover {
+  border-color: #b6c9e7 !important;
+  box-shadow: 0 8px 22px #1c355510 !important;
+  transform: translateY(-2px);
+}
+.studio-page #ai-studio-chat-stream .studio-prompt-mark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  margin-bottom: 12px !important;
+  border: 1px solid #dbe7fa;
+  border-radius: 9px;
+  background: #f2f7ff;
+  color: #3b69ac;
+  font: 600 10px/1 'JetBrains Mono', monospace;
+  letter-spacing: .05em;
+}
+.studio-page #ai-studio-chat-stream .chat-bubble.user-bubble {
+  background: #e8f0ff !important;
+  border: 1px solid #d8e5ff !important;
+  color: #1b345d !important;
+  box-shadow: none !important;
+}
+.studio-page #ai-studio-chat-stream .assistant-content { color: #29364a !important; line-height: 1.75 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content h2,
+.studio-page #ai-studio-chat-stream .assistant-content h3,
+.studio-page #ai-studio-chat-stream .assistant-content h4 { color: #172235 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content a { color: #1d5ed2 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content pre,
+.studio-page #ai-studio-chat-stream .code-block-container { background: #101a2a !important; border-color: #25344a !important; }
+.studio-page #ai-studio-chat-stream .assistant-content table { color: #334155 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content th { color: #1d4ed8 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content td { border-color: #e2e8f0 !important; }
+.studio-page #ai-studio-chat-stream .ai-thought-accordion,
+.studio-page #ai-studio-chat-stream .ai-blueprint-card { border-color: #e0e7ef !important; }
+
+.studio-page #ai-studio-shell > main > div:last-child {
+  max-width: 900px !important;
+  padding: 12px 28px 20px !important;
+}
+.studio-page #ai-studio-shell > main > div:last-child > div:first-child {
+  background: #fff !important;
+  border: 1px solid #dce4ef !important;
+  border-radius: 17px !important;
+  box-shadow: 0 8px 28px #1b31500c !important;
+  padding: 11px 13px 11px 18px !important;
+}
+.studio-page #ai-studio-input { color: #1d293b !important; }
+.studio-page #ai-studio-input::placeholder { color: #8491a3 !important; }
+.studio-page #ai-studio-input:focus { outline: none !important; }
+.studio-page #ai-studio-submit-btn { background: #2563eb !important; box-shadow: 0 3px 9px #2563eb44 !important; }
+.studio-page #ai-studio-submit-btn:hover { background: #1d4ed8 !important; }
+.studio-page #ai-studio-shell > main > div:last-child > div:last-child { color: #8491a3 !important; }
+
+/* Custom, low contrast scrollbars for every independently scrolling studio panel. */
+.studio-page *,
+.studio-page *::before,
+.studio-page *::after {
+  scrollbar-width: thin;
+  scrollbar-color: #718096 transparent;
+}
+.studio-page *::-webkit-scrollbar { width: 9px; height: 9px; }
+.studio-page *::-webkit-scrollbar-track { background: transparent; }
+.studio-page *::-webkit-scrollbar-thumb {
+  background: #718096;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+.studio-page *::-webkit-scrollbar-thumb:hover { background: #4b5e76; border: 2px solid transparent; background-clip: padding-box; }
+.studio-page *::-webkit-scrollbar-corner { background: transparent; }
+.studio-page #ai-studio-history-list { scrollbar-color: #51627a transparent; }
+.studio-page #ai-studio-chat-stream { scrollbar-color: #aab5c4 transparent; }
+.studio-page #ai-studio-shell.sidebar-collapsed > aside {
+  width: 66px !important;
+  min-width: 66px !important;
+  padding-right: 8px !important;
+  padding-left: 8px !important;
+}
+.studio-page #ai-studio-shell.sidebar-collapsed > aside > div:first-child > div:not(:first-child),
+.studio-page #ai-studio-shell.sidebar-collapsed > aside > div:last-child a span,
+.studio-page #ai-studio-shell.sidebar-collapsed > aside > div:last-child button span { display: none !important; }
+.studio-page #ai-studio-shell.sidebar-collapsed > aside > div:last-child > div { justify-content: center !important; gap: 8px !important; }
+.studio-page #ai-studio-shell.sidebar-collapsed > aside > div:first-child > div:first-child > div:last-child { display: none !important; }
+
+@media (max-width: 760px) {
+  .studio-page #ai-studio-shell > aside { width: 248px !important; min-width: 248px !important; }
+  .studio-page #studio-workspace-header { padding: 0 15px !important; }
+  .studio-page #ai-studio-chat-stream { padding: 22px 15px 16px !important; }
+  .studio-page #ai-studio-shell > main > div:last-child { padding: 10px 12px 14px !important; }
+}
+@media (max-width: 560px) {
+  .studio-page #ai-studio-shell > aside { width: 218px !important; min-width: 218px !important; padding: 14px 9px !important; }
+  .studio-page #ai-studio-shell > aside > div:first-child > div:first-child { padding-left: 3px !important; }
+  .studio-page #ai-studio-chat-stream { padding: 18px 12px 12px !important; }
+  .studio-page #ai-studio-chat-stream > div[style*="grid"] { grid-template-columns: 1fr !important; }
+}

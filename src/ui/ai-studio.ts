@@ -222,7 +222,7 @@ export function getActiveSession(): ChatSession {
     } else {
       const initial: ChatSession = {
         id: 'session-' + Date.now(),
-        title: 'Untitled architecture',
+        title: 'New chat',
         folderId: null,
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -238,7 +238,7 @@ export function getActiveSession(): ChatSession {
     if (chatSessions.length === 0) {
       const initial: ChatSession = {
         id: 'session-' + Date.now(),
-        title: 'Untitled architecture',
+        title: 'New chat',
         folderId: null,
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -320,17 +320,17 @@ export function initAIStudio(): void {
           {
             id: 'msg-welcome-' + proj.id,
             role: 'assistant',
-            content: `### 🔬 **${proj.title}** Engineering Laboratory
+            content: `### **${proj.title}** Engineering Laboratory
 
 I have the verified hardware schematic, BOM (**${proj.components.length} components**), conductor netlist (**${proj.wiringTable.length} pin connections**), and compilable Arduino C++ firmware loaded on the workbench.
 
 How can I help you with this project today? Feel free to ask about the wiring, code logic, or troubleshooting!`,
             timestamp: 'Just now',
             suggestions: [
-              { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
-              { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
-              { label: '⚡ Power & Voltage', prompt: 'What are the power supply and voltage requirements?' },
-              { label: '🛠️ Troubleshooting Tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
+              { label: 'Explain wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+              { label: 'Explain C++ code', prompt: 'Explain how the firmware code works step-by-step' },
+              { label: 'Power & voltage', prompt: 'What are the power supply and voltage requirements?' },
+              { label: 'Troubleshooting tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
             ]
           }
         ]
@@ -434,7 +434,7 @@ function renderWorkspaceHeaderHTML(): string {
     return `
       <header id="studio-workspace-header" style="height:52px; border-bottom:1px solid #222222; background:#0a0a0a; padding:0 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
         <div style="display:flex; align-items:center; gap:10px; min-width:0;">
-          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; background:rgba(59, 130, 246, 0.15); color:#60a5fa; padding:3px 8px; border-radius:9999px; border:1px solid rgba(59, 130, 246, 0.3); white-space:nowrap;">🔬 Project Lab</span>
+          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; background:rgba(59, 130, 246, 0.15); color:#60a5fa; padding:3px 8px; border-radius:9999px; border:1px solid rgba(59, 130, 246, 0.3); white-space:nowrap;">Project lab</span>
           <span class="text-sm font-semibold truncate" id="studio-active-title" style="font-size:14px; font-weight:600; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
             ${escapeHtml(active.title)}
           </span>
@@ -530,7 +530,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
           <!-- Clean Brand Logo Area -->
           <div style="display:flex; align-items:center; gap:10px; padding:6px 8px; cursor:pointer;" onclick="window.omniLabStudio.createNewChat()">
             <div style="width:30px; height:30px; border-radius:8px; background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.3); display:flex; align-items:center; justify-content:center; color:#60a5fa; flex-shrink:0;">
-              <span style="font-size:16px;">✦</span>
+              <span aria-hidden="true" style="font-size:16px;">✳</span>
             </div>
             <div style="display:flex; flex-direction:column; line-height:1.2;">
               <span style="font-size:14px; font-weight:600; color:#ffffff;">The Innovation Hub</span>
@@ -665,7 +665,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
           <div>
             <label style="display:block; font-size:12px; font-weight:500; color:#a0a0a0; margin-bottom:6px;">Custom API Key (Optional)</label>
             <input type="password" id="setting-key-input" placeholder="gsk_... or AIzaSy... (leave blank for default)" style="width:100%; background:#1a1a1a; border:1px solid #333333; border-radius:8px; padding:10px 12px; color:#ffffff; font-size:13px; outline:none; box-sizing:border-box;">
-            <p style="font-size:11px; color:#666666; margin:6px 0 0 0;">Stored securely in local browser storage only.</p>
+            <p style="font-size:11px; color:#666666; margin:6px 0 0 0;">Saved in this browser. Your key is sent to the selected AI provider for requests.</p>
           </div>
           <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
             <button style="padding:8px 16px; border-radius:8px; background:#1a1a1a; border:1px solid #333333; color:#a0a0a0; font-size:13px; cursor:pointer;" onclick="window.omniLabStudio.closeSettingsModal()">Cancel</button>
@@ -714,7 +714,7 @@ function renderHistoryItemsHTML(): string {
     <div class="studio-sidebar-section">
       <div class="studio-sidebar-section-header" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
         <div style="display:flex; align-items:center; gap:6px;">
-          <span style="font-size:12px;">🔬</span>
+          <span class="studio-section-mark" aria-hidden="true">P</span>
           <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">Project Laboratories</span>
         </div>
         <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#1e1f20] text-[#8ab4f8] font-mono border border-white/5 font-semibold">${filteredProjects.length}</span>
@@ -730,7 +730,7 @@ function renderHistoryItemsHTML(): string {
     <div class="studio-sidebar-section" style="margin-top:10px;">
       <div class="studio-sidebar-section-header" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
         <div style="display:flex; align-items:center; gap:6px;">
-          <span style="font-size:12px;">💬</span>
+          <span class="studio-section-mark" aria-hidden="true">C</span>
           <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">General Chats</span>
         </div>
         <button class="p-1 rounded hover:bg-[#202124] text-[#8ab4f8] hover:text-white transition-colors cursor-pointer text-xs" onclick="window.omniLabStudio.createNewChat()" title="Start New Chat" style="background:transparent; border:none; cursor:pointer; font-weight:600; padding:1px 4px;">
@@ -762,7 +762,7 @@ function renderProjectSessionItemHTML(s: ChatSession): string {
       style="${isActive ? 'background: #282a2d !important; border-color: rgba(66, 133, 244, 0.4);' : ''}"
     >
       <div class="flex items-center space-x-2 min-w-0 flex-1" style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
-        <span style="font-size:11px;">⚡</span>
+        <span class="studio-session-mark" aria-hidden="true">•</span>
         <span class="truncate ${isActive ? 'text-white font-medium' : 'text-[#bdc1c6]'}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px;">
           ${escapeHtml(s.title)}
         </span>
@@ -789,9 +789,9 @@ function renderSessionItemHTML(s: ChatSession): string {
       title="${escapeForAttr(s.title)}"
     >
       <div class="flex items-center space-x-1.5 min-w-0 flex-1" style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
-        <span style="font-size:11px;">${s.pinned ? '📌' : '💬'}</span>
+        <span class="studio-session-mark" aria-hidden="true">${s.pinned ? '★' : '•'}</span>
         <span class="truncate ${isActive ? 'text-white font-medium' : 'text-[#bdc1c6]'}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px;">
-          ${escapeHtml(s.title || 'Untitled architecture')}
+          ${escapeHtml(s.title || 'New chat')}
         </span>
       </div>
 
@@ -801,7 +801,7 @@ function renderSessionItemHTML(s: ChatSession): string {
         </span>
         <div class="chat-actions">
           <button class="studio-chat-action-btn" onclick="window.omniLabStudio.togglePinSession('${s.id}', event)" title="${s.pinned ? 'Unpin' : 'Pin to top'}">
-            ${s.pinned ? '★' : '📌'}
+            ${s.pinned ? '★' : '☆'}
           </button>
           <button class="studio-chat-action-btn" onclick="window.omniLabStudio.renameSession('${s.id}', event)" title="Rename">
             ✎
@@ -842,7 +842,7 @@ function renderChatStreamHTML(): string {
             style="background:#18181b; hover:background:#27272a; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
             onclick="window.omniLabStudio.selectStarter('Explain the ESP32 GPIO pinout, 3.3V logic levels, and which pins to avoid for analog reads', true)"
           >
-            <div style="font-size:18px; margin-bottom:8px;">🔌</div>
+            <div class="studio-prompt-mark" aria-hidden="true">01</div>
             <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Explain ESP32 GPIO Pinout</div>
             <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Pins to avoid, ADC2 Wi-Fi conflict, and 3.3V logic constraints.</div>
           </div>
@@ -852,7 +852,7 @@ function renderChatStreamHTML(): string {
             style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
             onclick="window.omniLabStudio.selectStarter('Write an Arduino C++ sketch to sweep an SG90 servo from 0 to 180 degrees using non-blocking millis()', true)"
           >
-            <div style="font-size:18px; margin-bottom:8px;">💻</div>
+            <div class="studio-prompt-mark" aria-hidden="true">02</div>
             <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Write Servo Sweep Sketch</div>
             <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Non-blocking C++ code for SG90 servo with smooth motion.</div>
           </div>
@@ -862,7 +862,7 @@ function renderChatStreamHTML(): string {
             style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
             onclick="window.omniLabStudio.selectStarter('What is the difference between ESP32 and Arduino Uno for beginner robotics?', true)"
           >
-            <div style="font-size:18px; margin-bottom:8px;">⚡</div>
+            <div class="studio-prompt-mark" aria-hidden="true">03</div>
             <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">ESP32 vs. Arduino Uno</div>
             <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Compare clock speeds, 5V vs 3.3V, memory, and Wi-Fi features.</div>
           </div>
@@ -872,7 +872,7 @@ function renderChatStreamHTML(): string {
             style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
             onclick="window.omniLabStudio.selectStarter('Why is my 0.96 inch I2C OLED display showing a blank black screen? How do I troubleshoot it?', true)"
           >
-            <div style="font-size:18px; margin-bottom:8px;">🛠️</div>
+            <div class="studio-prompt-mark" aria-hidden="true">04</div>
             <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Debug I2C OLED Display</div>
             <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Fix black screens, I2C address scanning, and pull-up resistors.</div>
           </div>
@@ -920,7 +920,7 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
           </div>
           <div class="chat-bubble assistant-bubble" style="background:#18181b; border:1px solid #27272a; border-radius:18px 18px 18px 4px; padding:12px 18px; font-size:13px; color:#a0a0a0;">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span class="thinking-spinner" style="color:#60a5fa;">✦</span>
+              <span class="thinking-spinner" style="color:#60a5fa;">•••</span>
               <span>${escapeHtml(msg.synthesisStatus || 'Consulting hardware engineering knowledge base...')}</span>
               <span id="synthesis-timer-${msg.id}" style="font-size:11px; color:#6b7280; margin-left:6px;">⏱ ${msg.thoughtDuration || '0.4s'}</span>
             </div>
@@ -996,7 +996,7 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
           <div class="ai-thought-accordion" id="thought-${msg.id}">
             <div class="thought-header" onclick="window.omniLabStudio.toggleThought('${msg.id}')">
               <div class="thought-pulse-indicator">
-                <span class="thought-sparkle">✦</span>
+                <span class="thought-sparkle">•</span>
                 <span class="thought-title">Thought for ${msg.thoughtDuration || '2.4s'}</span>
               </div>
               <svg class="thought-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -1020,11 +1020,11 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
         <!-- Suggestion Action Chips (if any) -->
         ${msg.suggestions && msg.suggestions.length > 0 ? `
           <div class="assistant-suggestions-row">
-            <div class="suggestions-label">💡 Suggested Next Actions &amp; Blueprints:</div>
+            <div class="suggestions-label">Suggested next steps</div>
             <div class="suggestions-chips-wrap">
               ${msg.suggestions.map(s => `
                 <button class="suggestion-chip" onclick="window.omniLabStudio.selectStarter('${escapeForAttr(s.prompt)}')">
-                  <span class="chip-spark">⚡</span>
+                  <span class="chip-spark" aria-hidden="true">›</span>
                   <span class="chip-text">${escapeHtml(s.label)}</span>
                 </button>
               `).join('')}
@@ -1062,7 +1062,7 @@ function renderLiveSynthesisStepsHTML(msg: StudioMessage): string {
     } else if (stepNum === currentIdx) {
       return `
         <div class="synthesis-step-item step-active">
-          <span class="step-icon-active">⚡</span>
+      <span class="step-icon-active">•</span>
           <span>${stepText}...</span>
         </div>
       `;
@@ -1140,12 +1140,16 @@ function formatProviderName(provider: string): string {
 }
 
 function escapeHtml(str: string): string {
-  return str
+  return stripStudioEmoji(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function stripStudioEmoji(value: string): string {
+  return value.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '');
 }
 
 function escapeForAttr(str: string): string {
@@ -1156,7 +1160,7 @@ function formatMarkdownToHTML(markdown: string): string {
   if (!markdown) return '';
 
   const codeBlocks: string[] = [];
-  let text = markdown.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+  let text = stripStudioEmoji(markdown).replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
     const idx = codeBlocks.length;
     codeBlocks.push(`<pre class="code-block-container"><code class="code-block language-${lang || 'cpp'}">${escapeHtml(code.trim())}</code></pre>`);
     return `%%CODEBLOCK_${idx}%%`;
@@ -1189,9 +1193,9 @@ function formatMarkdownToHTML(markdown: string): string {
   text = text.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
 
   // Interactive buttons in text like [⚡ Build Project: XYZ]
-  text = text.replace(/\[⚡ (?:Build|Synthesize)(?: Idea)?:?\s*([^\]]+)\]/gi, (_, projName) => {
+  text = text.replace(/\[(?:⚡\s*)?(?:Build|Synthesize)(?: Idea)?:?\s*([^\]]+)\]/gi, (_, projName) => {
     const clean = projName.trim();
-    return `<button class="inline-build-btn" onclick="window.omniLabStudio.selectStarter('Build ${escapeForAttr(clean)}')">⚡ Build ${escapeHtml(clean)}</button>`;
+    return `<button class="inline-build-btn" onclick="window.omniLabStudio.selectStarter('Build ${escapeForAttr(clean)}')">Build ${escapeHtml(clean)}</button>`;
   });
 
   // Blockquotes
@@ -1312,10 +1316,12 @@ export function registerOmniLabStudioGlobals(
       studioMessages = currentSession.messages;
 
       // Auto-title session on first user turn if untitled
-      if (!currentSession.projectId && (currentSession.title === 'Untitled architecture' || currentSession.title === 'Untitled prompt' || currentSession.messages.length <= 2)) {
+      if (!currentSession.projectId && (currentSession.title === 'New chat' || currentSession.title === 'Untitled architecture' || currentSession.title === 'Untitled prompt' || currentSession.messages.length <= 2)) {
         currentSession.title = prompt.length > 38 ? prompt.slice(0, 38) + '...' : prompt;
         const titleEl = document.getElementById('studio-active-title');
         if (titleEl) titleEl.textContent = currentSession.title;
+        const historyList = document.getElementById('ai-studio-history-list');
+        if (historyList) historyList.innerHTML = renderHistoryItemsHTML();
       }
       currentSession.updatedAt = Date.now();
 
@@ -1366,6 +1372,7 @@ export function registerOmniLabStudioGlobals(
           // Pass multi-turn history for infinite contextual chat
           const history = currentSession.messages
             .filter(m => !m.isStreaming && m.content)
+            .slice(0, -1)
             .map(m => ({ role: m.role, content: m.content }));
 
           const chatRes = await generateAIChatResponse(prompt, history, projectContext);
@@ -1399,6 +1406,8 @@ export function registerOmniLabStudioGlobals(
           assistantMsg.isStreaming = false;
           assistantMsg.content = 'Sorry, an error occurred while processing your request. Please try again.';
           if (stream) stream.innerHTML = renderChatStreamHTML();
+          const historyList = document.getElementById('ai-studio-history-list');
+          if (historyList) historyList.innerHTML = renderHistoryItemsHTML();
         } finally {
           isGenerating = false;
           if (sendBtn) sendBtn.disabled = false;
@@ -1709,7 +1718,7 @@ export function registerOmniLabStudioGlobals(
     createNewChat: (folderId?: string) => {
       const newSession: ChatSession = {
         id: 'session-' + Date.now(),
-        title: 'Untitled architecture',
+        title: 'New chat',
         folderId: folderId || null,
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -1826,13 +1835,13 @@ export function registerOmniLabStudioGlobals(
           {
             id: 'msg-welcome-' + session.projectId,
             role: 'assistant',
-            content: `### 🔬 **${session.title}** Engineering Laboratory\n\nWorkbench reset. How can I help you with this project today? Feel free to ask about wiring, code logic, or troubleshooting!`,
+            content: `### **${session.title}** Engineering Laboratory\n\nWorkbench reset. How can I help you with this project today? Feel free to ask about wiring, code logic, or troubleshooting!`,
             timestamp: 'Just now',
             suggestions: [
-              { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
-              { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
-              { label: '⚡ Power & Voltage', prompt: 'What are the power supply and voltage requirements?' },
-              { label: '🛠️ Troubleshooting Tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
+              { label: 'Explain wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
+              { label: 'Explain C++ code', prompt: 'Explain how the firmware code works step-by-step' },
+              { label: 'Power & voltage', prompt: 'What are the power supply and voltage requirements?' },
+              { label: 'Troubleshooting tips', prompt: 'What are common issues and troubleshooting tips for this build?' }
             ]
           }
         ];
@@ -1856,7 +1865,7 @@ export function registerOmniLabStudioGlobals(
         } else {
           const fallback: ChatSession = {
             id: 'session-' + Date.now(),
-            title: 'Untitled architecture',
+            title: 'New chat',
             folderId: null,
             createdAt: Date.now(),
             updatedAt: Date.now(),
@@ -1892,7 +1901,7 @@ export function registerOmniLabStudioGlobals(
       if (historyList) {
         historyList.innerHTML = renderHistoryItemsHTML();
       }
-      showToast(session.pinned ? '📌 Pinned architecture to top' : 'Unpinned architecture');
+      showToast(session.pinned ? 'Pinned chat to top' : 'Unpinned chat');
     },
 
     createFolderPrompt: () => {
