@@ -138,16 +138,47 @@
   box-shadow: none !important;
 }
 .studio-page #ai-studio-chat-stream .assistant-content { color: #29364a !important; line-height: 1.75 !important; }
-.studio-page #ai-studio-chat-stream .assistant-content h2,
-.studio-page #ai-studio-chat-stream .assistant-content h3,
-.studio-page #ai-studio-chat-stream .assistant-content h4 { color: #172235 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content .ai-paragraph,
+.studio-page #ai-studio-chat-stream .assistant-content .ai-list-item,
+.studio-page #ai-studio-chat-stream .assistant-content .ai-ol-item,
+.studio-page #ai-studio-chat-stream .assistant-content blockquote,
+.studio-page #ai-studio-chat-stream .assistant-content td { color: #344256 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content .ai-heading-1,
+.studio-page #ai-studio-chat-stream .assistant-content .ai-heading-2,
+.studio-page #ai-studio-chat-stream .assistant-content .ai-heading-3 { color: #172235 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content strong { color: #172235 !important; }
+.studio-page #ai-studio-chat-stream .assistant-content em { color: #53647b !important; }
 .studio-page #ai-studio-chat-stream .assistant-content a { color: #1d5ed2 !important; }
 .studio-page #ai-studio-chat-stream .assistant-content pre,
 .studio-page #ai-studio-chat-stream .code-block-container { background: #101a2a !important; border-color: #25344a !important; }
 .studio-page #ai-studio-chat-stream .assistant-content table { color: #334155 !important; }
 .studio-page #ai-studio-chat-stream .assistant-content th { color: #1d4ed8 !important; }
 .studio-page #ai-studio-chat-stream .assistant-content td { border-color: #e2e8f0 !important; }
-.studio-page #ai-studio-chat-stream .ai-thought-accordion,
+.studio-page #ai-studio-chat-stream .ai-thought-accordion {
+  background: #fff !important;
+  border: 1px solid #dce4ef !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 14px #1d35520b !important;
+}
+.studio-page #ai-studio-chat-stream .ai-thought-accordion .thought-header {
+  background: #f5f8fc !important;
+  border-bottom: 1px solid #e5eaf1 !important;
+}
+.studio-page #ai-studio-chat-stream .ai-thought-accordion .thought-header:hover { background: #edf3fb !important; }
+.studio-page #ai-studio-chat-stream .ai-thought-accordion .thought-title { color: #52627a !important; }
+.studio-page #ai-studio-chat-stream .ai-thought-accordion .thought-sparkle { color: #3973c6 !important; }
+.studio-page #ai-studio-chat-stream .ai-thought-accordion .thought-chevron { color: #78879a !important; }
+.studio-page #ai-studio-chat-stream .ai-thought-accordion .thought-body {
+  background: #fff !important;
+  border-top: 0 !important;
+}
+.studio-page #ai-studio-chat-stream .ai-thought-accordion .thought-step { color: #53647a !important; }
+.studio-page #ai-studio-chat-stream .chat-row .assistant-bubble:has(.thinking-spinner) {
+  background: #fff !important;
+  border: 1px solid #e0e7ef !important;
+  border-radius: 12px !important;
+  color: #52627a !important;
+}
 .studio-page #ai-studio-chat-stream .ai-blueprint-card { border-color: #e0e7ef !important; }
 
 .studio-page #ai-studio-shell > main > div:last-child {
