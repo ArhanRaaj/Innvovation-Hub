@@ -213,6 +213,27 @@ function initOmniLab(): void {
     renderAIStudioModal('dedicated-studio-mount');
   }
 
+  // Re-render AI Studio once Supabase auth resolves (async)
+  // This fixes the "stuck on sign-in" issue when auth hasn't loaded yet at first render
+  authService.onAuthStateChanged((_user) => {
+    initAIStudio();
+    registerOmniLabStudioGlobals(
+      PROJECTS_DATA,
+      state,
+      () => {
+        syncDynamicCounts(PROJECTS_DATA);
+        filterAndRender(PROJECTS_DATA, state);
+      },
+      showToast
+    );
+    if (document.getElementById('ai-architect-modal')) {
+      renderAIStudioModal('ai-architect-modal');
+    }
+    if (document.getElementById('dedicated-studio-mount')) {
+      renderAIStudioModal('dedicated-studio-mount');
+    }
+  });
+
   // Render home page featured projects
   renderHomeFeaturedProjects();
 
