@@ -480,20 +480,12 @@ export async function generateAIChatResponse(
   history?: { role: string; content: string }[],
   projectContext?: ScienceProject
 ): Promise<ChatResponseResult> {
-  let CHAT_SYSTEM_PROMPT = `You are the Lead Hardware Engineer and Robotics Mentor at The Innovation Hub.
-You talk naturally, warmly, conversationally, concisely, and intelligently like ChatGPT and Google Gemini.
-Guidelines:
-1. Talk like a friendly human engineer. Never recite corporate monologues, greetings reciting job roles, or robotic templates.
-2. If the user greets you or asks how you are, respond warmly, naturally, and ask what they're building or working on.
-3. If the user is troubleshooting (e.g. servo not moving, jitter, LED not lighting, ESP32 brownout reboot), give immediate, friendly, practical troubleshooting steps (power supply brownout, common ground, DuPont pinout, ESP32Servo vs Servo.h library).
-4. When suggesting project ideas, provide 3 to 5 concrete, inspiring concepts. For each idea include:
-   - Catchy Title
-   - Recommended Microcontroller (ESP32 or Arduino Uno)
-   - Key Sensors & Actuators
-   - The real-world problem or physics principle it solves
-   - An action tag at the end in this format: [⚡ Build Idea: <Title>]
-5. When explaining concepts (sensors, physics, protocols), explain the hardware operating mechanics, timing/voltage constraints (5V vs 3.3V, common ground), and provide an Arduino C++ snippet where relevant.
-6. Keep formatting clean with GitHub markdown.`;
+  let CHAT_SYSTEM_PROMPT = `You are a helpful, general-purpose AI chat assistant with a strong specialty in electronics, robotics, and science projects.
+Speak like a natural, thoughtful person. Answer the user's actual question directly and match the length and tone of their message. You can discuss everyday topics, explain ideas, brainstorm, write, plan, and help with technical work.
+Do not introduce yourself as an engineer, push hardware topics into unrelated conversations, or turn ordinary chat into a project pitch. Do not show internal reasoning or narrate your process. Ask a follow-up only when it will help.
+For hardware questions, give practical, accurate guidance and flag electrical safety issues. Include code only when it helps answer the question.
+When asked for ideas, provide a varied, thoughtfully selected set that fits the user's request. Avoid repeating the same list across turns. For buildable electronics ideas, include the board and core parts, and add a build action tag like [Build Idea: <Title>].
+If a question is outside your knowledge, be honest and ask what detail would help. Use clean Markdown only when it improves readability.`;
 
   if (projectContext) {
     CHAT_SYSTEM_PROMPT += `
@@ -515,20 +507,20 @@ ${projectContext.code}
 \`\`\`
 
 IMPORTANT FOR THIS WORKBENCH:
-- You have complete visibility of this exact project's schematic, pinouts, BOM, and firmware.
-- Answer the user's questions specifically referencing THIS project's actual pin connections, hardware modules, and code functions.
+- You have access to this project's schematic, pinouts, BOM, and firmware. Use those details when they're relevant to the user's question.
+- If the user changes to an unrelated topic, answer it normally without pulling the conversation back to this project.
 - If they ask about wiring, cite the exact pins from the wiring netlist above.
 - If they ask about firmware, explain the specific functions and variables from the code above.
 - If they ask for troubleshooting, identify potential issues for this specific board and modules (e.g., servo current draw, I2C pullups, ESP32 ADC2 Wi-Fi conflict).
 - Never output full project synthesis JSON unless explicitly told to 'build a new project from scratch'.
-- Speak naturally, concisely, and helpfully like a senior engineering mentor.`;
+- Use the project details when they're relevant, and respond normally to unrelated questions.`;
   }
 
   try {
     const rawReply = await callLLMText(CHAT_SYSTEM_PROMPT, prompt, history);
 
     const suggestions: ChatSuggestion[] = [];
-    const buildRegex = /\[⚡ (?:Build(?: Idea)?:?\s*)([^\]]+)\]/gi;
+    const buildRegex = /\[(?:⚡\s*)?Build(?: Idea)?:?\s*([^\]]+)\]/gi;
     let match;
     while ((match = buildRegex.exec(rawReply)) !== null) {
       const cleanName = match[1].trim();
@@ -550,9 +542,9 @@ IMPORTANT FOR THIS WORKBENCH:
         );
       } else {
         suggestions.push(
-          { label: 'Emotion Desk Robot', prompt: 'Build Emotion Desk Robot with ESP32' },
-          { label: 'Smart Watch', prompt: 'Build Smart Watch with ESP32' },
-          { label: 'Smart Dustbin', prompt: 'Build Touchless Smart Dustbin' }
+          { label: 'Brainstorm an idea', prompt: 'Help me brainstorm ideas for a personal project' },
+          { label: 'Explain something', prompt: 'Explain a topic I am curious about in simple terms' },
+          { label: 'Help me write', prompt: 'Help me write or improve something' }
         );
       }
     }
@@ -2453,12 +2445,72 @@ void loop() {
 // OFFLINE CONVERSATIONAL INTELLIGENCE & BRAINSTORMING ENGINE
 // ----------------------------------------------------------------------------
 
+interface OfflineProjectIdea {
+  title: string;
+  board: string;
+  parts: string;
+  explores: string;
+  category: string;
+}
+
+function generateOfflineProjectIdeaResponse(rawPrompt: string): ChatResponseResult {
+  const ideas: OfflineProjectIdea[] = [
+    { title: 'Smart Plant Care Monitor', board: 'ESP32 or Arduino Uno', parts: 'soil moisture probe, light sensor, small display', explores: 'how soil moisture and light affect plant growth', category: 'environment' },
+    { title: 'Indoor Air Quality Mapper', board: 'ESP32', parts: 'temperature, humidity, and air quality sensors', explores: 'how ventilation changes indoor air over time', category: 'environment' },
+    { title: 'Mini Solar Tracker', board: 'Arduino Uno', parts: 'four light sensors and two small servos', explores: 'whether tracking sunlight increases panel output', category: 'energy' },
+    { title: 'Obstacle-Avoiding Rover', board: 'Arduino Uno', parts: 'ultrasonic sensor, motor driver, and two motors', explores: 'how feedback lets a robot navigate around objects', category: 'robotics' },
+    { title: 'Accessible Touch-Free Doorbell', board: 'ESP32 or Arduino Uno', parts: 'distance sensor, indicator lights, and a small speaker', explores: 'how contact-free controls can improve accessibility', category: 'accessibility' },
+    { title: 'Pocket Weather Station', board: 'ESP32', parts: 'temperature, humidity, and pressure sensors with a display', explores: 'how local weather changes compare with forecasts', category: 'environment' },
+    { title: 'Sound-to-Light Visualizer', board: 'Arduino Uno', parts: 'microphone module and addressable LED strip', explores: 'how sound frequency and amplitude can be visualized', category: 'physics' },
+    { title: 'Water Use Leak Alarm', board: 'ESP32 or Arduino Uno', parts: 'water level or flow sensor, buzzer, and indicator', explores: 'how quickly a small leak can waste water', category: 'conservation' },
+    { title: 'Gesture-Controlled Desk Light', board: 'ESP32', parts: 'gesture sensor and dimmable LED', explores: 'how infrared sensing can recognize simple hand movements', category: 'accessibility' },
+    { title: 'Earthquake-Resistant Structure Test', board: 'Arduino Uno', parts: 'vibration sensor, accelerometer, and model structures', explores: 'which building shapes best resist different vibration patterns', category: 'physics' },
+    { title: 'Smart Recycling Sorter', board: 'ESP32', parts: 'color sensor, servo, and simple sorting chute', explores: 'how color sensing can assist basic material sorting', category: 'conservation' },
+    { title: 'Classroom Noise and Focus Study', board: 'ESP32', parts: 'sound level sensor, display, and data logger', explores: 'how sound levels change across different classroom activities', category: 'science' }
+  ];
+  const lowerPrompt = rawPrompt.toLowerCase();
+  const matchingCategories = new Set<string>();
+  if (/robot|car|vehicle|motion|automation/.test(lowerPrompt)) matchingCategories.add('robotics');
+  if (/plant|weather|climate|environment|air|water/.test(lowerPrompt)) matchingCategories.add('environment');
+  if (/energy|solar|electric|power/.test(lowerPrompt)) matchingCategories.add('energy');
+  if (/accessib|assist|inclusive|disabil/.test(lowerPrompt)) matchingCategories.add('accessibility');
+
+  const tailoredIdeas = matchingCategories.size
+    ? ideas.filter(idea => matchingCategories.has(idea.category) || idea.category === 'physics' || idea.category === 'science')
+    : [...ideas];
+  const pool = tailoredIdeas.length >= 5 ? tailoredIdeas : ideas;
+  // Shuffle the curated pool so repeated prompts offer different combinations.
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const requestedCount = Number(rawPrompt.match(/\b(\d{1,2})\s+(?:different\s+)?(?:ideas|projects|topics)\b/i)?.[1]);
+  const count = Math.min(8, Math.max(3, requestedCount || 5));
+  const selected = pool.slice(0, count);
+  const reply = `Here are ${selected.length} ideas picked from a mix of topics. I can make them easier, more advanced, or focus on a theme if you like.\n\n${selected.map((idea, index) => `- **${idea.title}** (${idea.board})\n  Uses ${idea.parts}. You could explore ${idea.explores}.\n  [Build Idea: ${idea.title}]`).join('\n\n')}\n\nPick one and I can help turn it into a plan, or I can suggest another set.`;
+  return {
+    reply,
+    reasoning: [],
+    suggestions: selected.map(idea => ({ label: idea.title, prompt: `Build ${idea.title}` }))
+  };
+}
+
 function generateOfflineChatResponse(
   rawPrompt: string,
   history?: { role: string; content: string }[],
   projectContext?: ScienceProject
 ): ChatResponseResult {
   const p = rawPrompt.toLowerCase().trim();
+
+  if (/^(who are you|what can you do|help)\b/i.test(p)) {
+    return { reply: "I'm your AI chat assistant. We can talk about everyday questions, brainstorm ideas, work on writing, or dig into science and hardware whenever you want. What would you like to talk about?", reasoning: [], suggestions: [] };
+  }
+  if (/^(hi|hello|hey|yo|good\s+(morning|afternoon|evening)|how are you|how r u|sup)\b/i.test(p)) {
+    return { reply: /how are you|how r u/i.test(p) ? "I'm doing well, thanks for asking. How are you?" : "Hey! What's on your mind?", reasoning: [], suggestions: [] };
+  }
+  if (/^(thanks|thank you|thx|ty)\b/i.test(p)) return { reply: "You're welcome!", reasoning: [], suggestions: [] };
+  if (/^(bye|goodbye|see you|talk later)\b/i.test(p)) return { reply: "See you later!", reasoning: [], suggestions: [] };
+  if (/tell me (a )?joke|make me laugh/i.test(p)) return { reply: "Why did the scarecrow win an award? Because he was outstanding in his field.", reasoning: [], suggestions: [] };
 
   // A. SPECIFIC PROJECT WORKBENCH DIALOGUE (When user is in a dedicated project chat)
   if (projectContext) {
@@ -2698,53 +2750,22 @@ Would you like me to inspect a specific error message or pin behavior?`,
 
     // Default conversational reply inside project lab
     return {
-      reply: `### 💡 **${projectContext.title}** Notes
-
-Regarding **"${rawPrompt}"**:
-
-In this build, the **${projectContext.board}** coordinates all sensor acquisition and actuator timing. 
-- You can inspect the real-time wiring netlist in the **Schematic** tab.
-- All hardware libraries and pin assignments are fully initialized in the C++ firmware.
-
-Feel free to ask me to explain any specific pin, modify the code, or walk through the hardware assembly!`,
-      reasoning: [
-        `Grounded response in active project laboratory: ${projectContext.title}`,
-        'Referenced project MCU and active telemetry pipeline'
-      ],
-      suggestions: [
-        { label: '🔌 Explain Wiring', prompt: 'Explain the wiring connections and pin assignments for this circuit' },
-        { label: '💻 Explain C++ Code', prompt: 'Explain how the firmware code works step-by-step' },
-        { label: '📋 View Parts BOM', prompt: 'Show me the bill of materials and components' }
-      ]
+      reply: "I'm here to help. Tell me a little more about what you're thinking, and we'll work through it together. If it's about this build, I can also use its wiring and firmware details.",
+      reasoning: [],
+      suggestions: []
     };
   }
 
   // B. GENERAL CONVERSATIONAL ENGINE (When outside a specific project)
-  // 1. Social Greetings & Introduction
-  if (/^(hi|hello|hey|yo|greetings|good\s+(morning|afternoon|evening)|who are you|what can you do|help|how are you|how r u|sup)\b/i.test(p)) {
+  // 1. Explain the assistant naturally when asked.
+  if (/^(who are you|what can you do|help)\b/i.test(p)) {
     return {
-      reply: `### 👋 Hey there! Welcome to **The Innovation Hub**!
-
-I'm your embedded systems and robotics mentor. How's it going?
-
-Whether you're brainstorming a science fair project, wiring up an ESP32 or Arduino, or troubleshooting a tricky sensor or servo, I'm here to help.
-
-What are you working on or curious about today?`,
-      reasoning: [
-        'Detected friendly conversational greeting',
-        'Replied warmly and conversationally in ChatGPT/Gemini style',
-        'Offered assistance with hardware, circuits, and science fair projects'
-      ],
-      suggestions: [
-        { label: 'Science Fair Project Ideas', prompt: 'Give me 5 science fair project ideas for 10th grade' },
-        { label: 'How Does Ultrasonic Sensor Work?', prompt: 'How does an ultrasonic sensor work?' },
-        { label: 'ESP32 vs Arduino Uno', prompt: 'What is the difference between ESP32 and Arduino Uno?' },
-        { label: 'Build Emotion Desk Robot', prompt: 'Build Emotion Desk Robot with ESP32' }
-      ]
+      reply: "I'm your AI chat assistant. We can talk about everyday questions, brainstorm ideas, work on writing, or dig into science and hardware whenever you want. What would you like to talk about?",
+      reasoning: [],
+      suggestions: []
     };
   }
-
-  // 2. Science Fair Project Ideation & Brainstorming
+  // 2. Offer a varied, randomly selected set of project ideas.
   if (
     p.includes('idea') ||
     p.includes('science fair') ||
@@ -2754,80 +2775,8 @@ What are you working on or curious about today?`,
     p.includes('what should i make') ||
     p.includes('topics')
   ) {
-    const is10th = p.includes('10th') || p.includes('class 10') || p.includes('high school');
-    const isBeginner = p.includes('beginner') || p.includes('easy') || p.includes('starter');
-
-    return {
-      reply: `### 🏆 Top High-Impact Science Fair & Robotics Project Ideas
-
-Here are curated, award-winning project concepts designed to impress science fair judges with rigorous physics, real-world utility, and clean engineering:
-
----
-
-#### 1. 🤖 **Desktop Companion Robot with Emotive Pan-Tilt Visor**
-- **Recommended Board**: ESP32 (3.3V logic, dual-core 240MHz)
-- **Key Modules**: 0.96" OLED Eye Visor, Dual SG90 Pan-Tilt Servos, HC-SR04 Sonar, TTP223 Capacitive Touch
-- **Scientific Principle**: Human-Robot Interaction (HRI), affective computing micro-saccades, and capacitive dielectric sensing.
-- **Why Judges Love It**: Combines mechanical kinematics, digital animation, and behavioral psychology.
-- [⚡ Build Emotion Desk Robot with ESP32]
-
----
-
-#### 2. ☀️ **Dual-Axis Phototropic Solar Tracker with MPPT Analysis**
-- **Recommended Board**: Arduino Uno R3 or ESP32
-- **Key Modules**: 4x LDR Light Sensors, 2x SG90 Servo Motors, 0.96" OLED Telemetry Display
-- **Scientific Principle**: Differential photon absorption, Lambert's Cosine Law, and solar azimuth/elevation vector tracking (+35% energy yield over static panels).
-- **Why Judges Love It**: Clear independent/dependent variables with measurable quantitative data graphs.
-- [⚡ Build Dual-Axis Solar Tracker]
-
----
-
-#### 3. 🗑️ **Touchless Automated Smart Dustbin with Sonar Actuation**
-- **Recommended Board**: Arduino Uno or ESP32
-- **Key Modules**: HC-SR04 Ultrasonic Sonar, SG90 Micro Servo, Active Piezo Buzzer
-- **Scientific Principle**: Acoustic echo time-of-flight ranging and contactless pathogen prevention in sanitary environments.
-- **Why Judges Love It**: Highly practical, approachable, and flawless reliability during live judging demonstrations.
-- [⚡ Build Touchless Smart Dustbin]
-
----
-
-#### 4. ⌚ **Wearable Health Telemetry & Pedometer Smart Watch**
-- **Recommended Board**: ESP32 NodeMCU
-- **Key Modules**: 0.96" OLED (SSD1306), DS3231 High-Precision RTC, MPU6050 6-Axis IMU, Haptic Vibration Motor
-- **Scientific Principle**: Tri-axial dynamic acceleration vector peak detection and temperature-compensated quartz timekeeping.
-- **Why Judges Love It**: Demonstrates modern wearable biometric engineering and ambulatory digital healthcare.
-- [⚡ Build ESP32 Smart Watch]
-
----
-
-#### 5. 🌿 **Automated IoT Microclimate Weather & Soil Irrigation Station**
-- **Recommended Board**: ESP32 or Arduino Uno
-- **Key Modules**: DHT22 Temp/Humidity, BMP280 Barometer, Capacitive Soil Probe, 5V Relay Water Pump
-- **Scientific Principle**: Soil dielectric permittivity, barometric pressure altitude calculations, and feedback control loops.
-- **Why Judges Love It**: Direct relevance to agricultural water conservation and global climate research.
-- [⚡ Build IoT Weather Station with ESP32]
-
----
-
-> 💡 **Science Fair Winning Tip**: Always create a data comparison chart showing **Before vs. After** or **Traditional vs. Automated** (e.g., energy produced by static solar panel vs. tracked solar panel over 6 hours).
-
-Click any button below to instantly generate the full wiring schematic, pinout netlist, and C++ firmware!`,
-      reasoning: [
-        'Analyzed user inquiry: Science fair ideation and hardware brainstorming',
-        'Selected 5 diverse, high-scoring projects spanning robotics, clean energy, IoT, and wearables',
-        'Included underlying scientific principles and judging criteria for maximum presentation impact',
-        'Generated interactive build actions for each concept'
-      ],
-      suggestions: [
-        { label: 'Build Emotion Desk Robot', prompt: 'Build Emotion Desk Robot with ESP32' },
-        { label: 'Build Solar Tracker', prompt: 'Build Dual-Axis Solar Tracker' },
-        { label: 'Build Touchless Dustbin', prompt: 'Build Touchless Smart Dustbin' },
-        { label: 'Build Smart Watch', prompt: 'Build ESP32 Smart Watch' },
-        { label: 'Build Weather Station', prompt: 'Build IoT Weather Station with ESP32' }
-      ]
-    };
+    return generateOfflineProjectIdeaResponse(rawPrompt);
   }
-
   // 3. Ultrasonic Sensor / Sonar / HC-SR04 Deep Dive
   if (p.includes('ultrasonic') || p.includes('hc-sr04') || p.includes('sonar')) {
     return {
@@ -3098,27 +3047,9 @@ Tell me what specific hardware component is giving you trouble, and I'll debug y
 
   // 7. General Dynamic Conversational Fallback
   return {
-    reply: `### 💡 Engineering Advisory & Concept Exploration
-
-I'm ready to help you engineer and build **"${rawPrompt}"**!
-
-Here is how we can tackle this design:
-1. **Architecture Planning**: Select either an **Arduino Uno R3** (for 5V classroom ease) or an **ESP32** (for Wi-Fi/BLE IoT processing and OLED graphics).
-2. **Sensor & Actuator Netlist**: Map out required sensing transducers (acoustic sonar, infrared, environmental, IMU) and actuation loads (servos, relays, solenoids).
-3. **Power Budget**: Ensure safe current limits, logic voltage translation (5.0V vs. 3.3V), and common ground return loops.
-4. **Firmware Synthesis**: Generate compilable Arduino C++ firmware with modular functions, non-blocking timers, and zero compiler warnings.
-
-Would you like me to synthesize the full engineering blueprint card with CAD schematics, pinout wiring, and C++ code right now?`,
-    reasoning: [
-      'Processed custom query context and hardware parameters',
-      'Outlined embedded systems engineering workflow and power budget considerations',
-      'Prepared blueprint synthesis starter actions'
-    ],
-    suggestions: [
-      { label: `Synthesize ${rawPrompt.slice(0, 28)}`, prompt: `Build ${rawPrompt}` },
-      { label: 'Science Fair Project Ideas', prompt: 'Give me 5 science fair project ideas for 10th grade' },
-      { label: 'Explore Emotion Robot', prompt: 'Build Emotion Desk Robot with ESP32' }
-    ]
+    reply: "I'd be happy to help with that. A live AI provider isn't responding right now, so I can't give you a reliable answer to this one yet. You can connect Gemini, Groq, or OpenRouter in Settings for open-ended conversation; common hardware questions and project ideas still work offline.",
+    reasoning: [],
+    suggestions: []
   };
 }
 

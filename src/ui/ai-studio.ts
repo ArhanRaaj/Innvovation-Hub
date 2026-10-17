@@ -63,7 +63,7 @@ let isGenerating = false;
 let activeStarterCategory: string = 'all';
 let currentTargetBoard: 'ESP32' | 'Arduino Uno' = 'ESP32';
 let historySearchQuery: string = '';
-let showAllProjectSessions = false;
+let activeSidebarTab: 'chats' | 'projects' = 'chats';
 let activeMountContainerId: string = 'ai-architect-modal';
 
 export interface StarterPromptItem {
@@ -366,6 +366,7 @@ How can I help you with this project today? Feel free to ask about the wiring, c
       const match = chatSessions.find(s => s.projectId === reqProjId || s.id === 'project-chat-' + reqProjId);
       if (match) {
         activeSessionId = match.id;
+        activeSidebarTab = match.projectId ? 'projects' : 'chats';
         currentTargetBoard = match.targetBoard || 'ESP32';
         studioMessages = match.messages;
         return;
@@ -380,6 +381,7 @@ How can I help you with this project today? Feel free to ask about the wiring, c
   const activeSess = chatSessions.find(s => s.id === activeSessionId) || chatSessions[0];
   studioMessages = activeSess.messages;
   currentTargetBoard = activeSess.targetBoard || 'ESP32';
+  activeSidebarTab = activeSess.projectId ? 'projects' : 'chats';
 }
 
 export function getAllStudioProjects(): ScienceProject[] {
@@ -599,7 +601,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
             <textarea
               id="ai-studio-input"
               rows="1"
-              placeholder="Ask about wiring, code, components, or anything hardware..."
+              placeholder="Message AI Studio"
               style="width:100%; max-height:150px; min-height:24px; background:transparent !important; border:none !important; outline:none !important; font-size:14px; line-height:1.5; color:#ffffff; resize:none; padding:4px 0; font-family:inherit; box-sizing:border-box;"
               onkeydown="window.omniLabStudio.handleInputKeydown(event)"
               oninput="window.omniLabStudio.autoResizeTextarea(this); window.omniLabStudio.updateTokenCount();"
@@ -620,7 +622,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
             </button>
           </div>
           <div style="text-align:center; margin-top:8px; font-size:11px; color:#666666;">
-            The Innovation Hub AI Assistant &bull; ESP32 &amp; Arduino Hardware Engineering
+            AI assistant &bull; everyday chat, ideas, and engineering help
           </div>
         </div>
       </main>
@@ -686,8 +688,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
 
 function renderHistoryItemsHTML(): string {
   const q = historySearchQuery.trim().toLowerCase();
-  
-  // Separate into Project Laboratories and General Conversations
+
   const projectSessions = chatSessions.filter(s => !!s.projectId);
   const generalSessions = chatSessions.filter(s => !s.projectId);
 
@@ -705,60 +706,28 @@ function renderHistoryItemsHTML(): string {
     );
   }
 
-  // Keep recent conversations at the top, with pinned items taking priority.
+  // Sort each view by its most recently updated chat.
   filteredGeneral.sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.updatedAt - a.updatedAt);
   filteredProjects.sort((a, b) => b.updatedAt - a.updatedAt);
 
-  const isSearching = q.length > 0;
-  const visibleProjectSessions = isSearching || showAllProjectSessions
-    ? filteredProjects
-    : filteredProjects.slice(0, 5);
-  const activeProjectSession = filteredProjects.find(s => s.id === activeSessionId);
-  if (!isSearching && !showAllProjectSessions && activeProjectSession && !visibleProjectSessions.includes(activeProjectSession)) {
-    visibleProjectSessions[visibleProjectSessions.length - 1] = activeProjectSession;
-  }
-  const hasMoreProjects = !isSearching && filteredProjects.length > 5;
+  const showingChats = activeSidebarTab === 'chats';
+  const rows = showingChats ? filteredGeneral : filteredProjects;
+  const listHTML = rows.length
+    ? rows.map(s => showingChats ? renderSessionItemHTML(s) : renderProjectSessionItemHTML(s)).join('')
+    : `<div class="studio-sidebar-empty">${q ? 'No matches. Try another search.' : showingChats ? 'Your conversations will appear here.' : 'Your project labs will appear here.'}</div>`;
 
-  const htmlChunks: string[] = [];
-
-  // Put normal conversations first so the studio reads like a familiar chatbot.
-  htmlChunks.push(`
-    <div class="studio-sidebar-section">
-      <div class="studio-sidebar-section-header studio-sidebar-section-heading" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span class="studio-section-mark" aria-hidden="true">C</span>
-          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">Recent chats</span>
-        </div>
-        <span class="studio-count">${filteredGeneral.length}</span>
-      </div>
-      <div class="space-y-0.5" style="display:flex; flex-direction:column; gap:2px;">
-        ${filteredGeneral.length === 0 ? `
-          <div class="studio-sidebar-empty">No chats yet. Start one above.</div>
-        ` : filteredGeneral.map(s => renderSessionItemHTML(s)).join('')}
-      </div>
+  return `
+    <div class="studio-sidebar-tabs" role="tablist" aria-label="Studio history">
+      <button class="studio-sidebar-tab ${showingChats ? 'active' : ''}" role="tab" aria-selected="${showingChats}" onclick="window.omniLabStudio.setSidebarTab('chats')">
+        <span>Chats</span><span class="studio-count">${filteredGeneral.length}</span>
+      </button>
+      <button class="studio-sidebar-tab ${!showingChats ? 'active' : ''}" role="tab" aria-selected="${!showingChats}" onclick="window.omniLabStudio.setSidebarTab('projects')">
+        <span>Projects</span><span class="studio-count">${filteredProjects.length}</span>
+      </button>
     </div>
-  `);
-
-  // Keep project labs compact, with an explicit way to browse the full list.
-  htmlChunks.push(`
-    <div class="studio-sidebar-section studio-projects-section" style="margin-top:18px;">
-      <div class="studio-sidebar-section-header studio-sidebar-section-heading" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span class="studio-section-mark" aria-hidden="true">P</span>
-          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">Project labs</span>
-        </div>
-        <span class="studio-count">${filteredProjects.length}</span>
-      </div>
-      <div class="space-y-0.5" style="display:flex; flex-direction:column; gap:2px;">
-        ${visibleProjectSessions.length === 0 ? `
-          <div class="studio-sidebar-empty">${isSearching ? 'No matching projects' : 'No project labs yet'}</div>
-        ` : visibleProjectSessions.map(s => renderProjectSessionItemHTML(s)).join('')}
-      </div>
-      ${hasMoreProjects ? `<button class="studio-show-more" onclick="window.omniLabStudio.toggleProjectSessions()">${showAllProjectSessions ? 'Show fewer' : `Show all ${filteredProjects.length} projects`}<span aria-hidden="true">${showAllProjectSessions ? '−' : '+'}</span></button>` : ''}
-    </div>
-  `);
-
-  return htmlChunks.join('');
+    <div class="studio-sidebar-list-label">${showingChats ? 'Recent conversations' : 'Project labs'}</div>
+    <div class="studio-sidebar-list" role="tabpanel">${listHTML}</div>
+  `;
 }
 
 function renderProjectSessionItemHTML(s: ChatSession): string {
@@ -841,52 +810,52 @@ function renderChatStreamHTML(): string {
           </svg>
         </div>
 
-        <h1 style="font-size:30px; font-weight:600; color:#ffffff; letter-spacing:-0.02em; margin:0 0 6px 0; font-family:'Google Sans', sans-serif;">The Innovation Hub</h1>
+        <h1 style="font-size:30px; font-weight:600; color:#ffffff; letter-spacing:-0.02em; margin:0 0 6px 0; font-family:'Google Sans', sans-serif;">What would you like to talk about?</h1>
         <p style="font-size:14px; color:#a0a0a0; max-width:520px; margin:0 auto 28px auto; line-height:1.5;">
-          AI Hardware Engineering Assistant • Ask about circuits, pinouts, C++ firmware, or troubleshoot hardware issues.
+          Ask a question, explore an idea, get help writing something, or build a project together. Hardware is one of my specialties.
         </p>
 
-        <!-- 4 Hardware Engineering Suggestion Cards (2x2 Grid) -->
+        <!-- Conversation starters -->
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; width:100%; max-width:680px; text-align:left;">
           
-          <!-- Card 1: ESP32 Pinout -->
+          <!-- Card 1: Open conversation -->
           <div 
             style="background:#18181b; hover:background:#27272a; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
-            onclick="window.omniLabStudio.selectStarter('Explain the ESP32 GPIO pinout, 3.3V logic levels, and which pins to avoid for analog reads', true)"
+            onclick="window.omniLabStudio.selectStarter('Help me brainstorm ideas for a personal project', true)"
           >
             <div class="studio-prompt-mark" aria-hidden="true">01</div>
-            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Explain ESP32 GPIO Pinout</div>
-            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Pins to avoid, ADC2 Wi-Fi conflict, and 3.3V logic constraints.</div>
+            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Brainstorm an idea</div>
+            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Explore possibilities for something you want to make or learn.</div>
           </div>
 
-          <!-- Card 2: Servo Sweep -->
+          <!-- Card 2: Explain a topic -->
           <div 
             style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
-            onclick="window.omniLabStudio.selectStarter('Write an Arduino C++ sketch to sweep an SG90 servo from 0 to 180 degrees using non-blocking millis()', true)"
+            onclick="window.omniLabStudio.selectStarter('Explain a topic I am curious about in simple terms', true)"
           >
             <div class="studio-prompt-mark" aria-hidden="true">02</div>
-            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Write Servo Sweep Sketch</div>
-            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Non-blocking C++ code for SG90 servo with smooth motion.</div>
+            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Explain something</div>
+            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Get a clear explanation of a question on your mind.</div>
           </div>
 
-          <!-- Card 3: MCU Comparison -->
+          <!-- Card 3: Writing help -->
           <div 
             style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
-            onclick="window.omniLabStudio.selectStarter('What is the difference between ESP32 and Arduino Uno for beginner robotics?', true)"
+            onclick="window.omniLabStudio.selectStarter('Help me write or improve something', true)"
           >
             <div class="studio-prompt-mark" aria-hidden="true">03</div>
-            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">ESP32 vs. Arduino Uno</div>
-            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Compare clock speeds, 5V vs 3.3V, memory, and Wi-Fi features.</div>
+            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Help me write</div>
+            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Draft, edit, or find the right way to say something.</div>
           </div>
 
-          <!-- Card 4: I2C OLED Debugging -->
+          <!-- Card 4: Hardware guidance -->
           <div 
             style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
-            onclick="window.omniLabStudio.selectStarter('Why is my 0.96 inch I2C OLED display showing a blank black screen? How do I troubleshoot it?', true)"
+            onclick="window.omniLabStudio.selectStarter('I need help with a hardware project', true)"
           >
             <div class="studio-prompt-mark" aria-hidden="true">04</div>
-            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Debug I2C OLED Display</div>
-            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Fix black screens, I2C address scanning, and pull-up resistors.</div>
+            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Work on a project</div>
+            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Plan a build, choose components, or troubleshoot an issue.</div>
           </div>
 
         </div>
@@ -922,72 +891,10 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
 
   // Assistant Response: LIVE SYNTHESIS LOADING STATE
   if (msg.isStreaming) {
-    if (msg.isChatThinking) {
-      return `
-        <div class="chat-row assistant-row" style="display:flex; justify-content:flex-start; align-items:flex-start; gap:12px; margin:8px 0;">
-          <div style="width:32px; height:32px; border-radius:50%; background:#1e293b; color:#60a5fa; border:1px solid rgba(96,165,250,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
-            </svg>
-          </div>
-          <div class="chat-bubble assistant-bubble" style="background:#18181b; border:1px solid #27272a; border-radius:18px 18px 18px 4px; padding:12px 18px; font-size:13px; color:#a0a0a0;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span class="thinking-spinner" style="color:#60a5fa;">•••</span>
-              <span>${escapeHtml(msg.synthesisStatus || 'Consulting hardware engineering knowledge base...')}</span>
-              <span id="synthesis-timer-${msg.id}" style="font-size:11px; color:#6b7280; margin-left:6px;">⏱ ${msg.thoughtDuration || '0.4s'}</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    const pct = msg.progressPct || 20;
-    const statusText = msg.synthesisStatus || 'Synthesizing Hardware Architecture & Power Budget...';
-    const timerText = msg.thoughtDuration || '0.4s';
-
     return `
-      <div class="chat-row assistant-row" style="display:flex; justify-content:flex-start; align-items:flex-start; gap:12px; margin:8px 0;">
-        <div style="width:32px; height:32px; border-radius:50%; background:#1e293b; color:#60a5fa; border:1px solid rgba(96,165,250,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
-          </svg>
-        </div>
-
-        <div class="chat-bubble assistant-bubble" style="width: 100%; max-width: 820px;">
-          <!-- Signature OmniLab Loading Bar & Reasoning Engine Card -->
-          <div class="ai-synthesis-progress-card">
-            <!-- Animated Laser Beam Shimmer -->
-            <div class="synthesis-laser-shimmer"></div>
-
-            <div class="synthesis-status-header">
-              <div class="synthesis-status-left">
-                <div class="synthesis-spinner-orbit">
-                  <span class="spinner-ring"></span>
-                  <span class="spinner-core"></span>
-                </div>
-                <div>
-                  <div class="synthesis-status-title" id="synthesis-title-${msg.id}">
-                    ${statusText}
-                  </div>
-                  <div class="synthesis-status-sub">The Innovation Hub // AI Hardware Studio</div>
-                </div>
-              </div>
-              <div class="synthesis-status-right">
-                <span class="synthesis-pct-badge" id="synthesis-pct-${msg.id}">${pct}%</span>
-                <span class="synthesis-timer-badge" id="synthesis-timer-${msg.id}">⏱ ${timerText}</span>
-              </div>
-            </div>
-
-            <!-- Dynamic Progress Fill Bar -->
-            <div class="synthesis-progress-track">
-              <div class="synthesis-progress-fill" id="synthesis-fill-${msg.id}" style="width: ${pct}%;"></div>
-            </div>
-
-            <!-- Live Step-by-Step Reasoning Progress Tree -->
-            <div class="synthesis-steps-tree">
-              ${renderLiveSynthesisStepsHTML(msg)}
-            </div>
-          </div>
+        <div class="assistant-typing-row" role="status" aria-label="Assistant is responding">
+          <span class="assistant-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          ${msg.isChatThinking ? '' : '<span class="assistant-typing-label">Putting the project together</span>'}
         </div>
       </div>
     `;
@@ -1003,27 +910,6 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
       </div>
 
       <div class="chat-bubble assistant-bubble" style="flex:1; min-width:0; background:transparent; padding:0; border:none;">
-        <!-- Antigravity Reasoning Accordion (Extended Thinking) -->
-        ${msg.reasoningSteps && msg.reasoningSteps.length > 0 ? `
-          <div class="ai-thought-accordion" id="thought-${msg.id}">
-            <div class="thought-header" onclick="window.omniLabStudio.toggleThought('${msg.id}')">
-              <div class="thought-pulse-indicator">
-                <span class="thought-sparkle">•</span>
-                <span class="thought-title">Thought for ${msg.thoughtDuration || '2.4s'}</span>
-              </div>
-              <svg class="thought-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-            <div class="thought-body" id="thought-body-${msg.id}">
-              ${msg.reasoningSteps.map(step => `
-                <div class="thought-step">
-                  <span class="step-check">✓</span>
-                  <span class="step-text">${step}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        ` : ''}
-
         <!-- Message Body with Rich Markdown -->
         <div class="assistant-content">
           ${formatMarkdownToHTML(msg.content)}
@@ -1273,7 +1159,7 @@ declare global {
       filterCategory: (cat: string) => void;
       toggleTargetBoard: () => void;
       filterHistory: (query: string) => void;
-      toggleProjectSessions: () => void;
+      setSidebarTab: (tab: 'chats' | 'projects') => void;
       togglePinoutCheatsheet: () => void;
       deleteHistoryItem: (id: string, e: MouseEvent) => void;
 
@@ -1367,20 +1253,6 @@ export function registerOmniLabStudioGlobals(
           stream.scrollTop = stream.scrollHeight;
         }
 
-        const startTime = Date.now();
-        const thinkTimer = setInterval(() => {
-          if (!isGenerating) {
-            clearInterval(thinkTimer);
-            return;
-          }
-          const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
-          assistantMsg.thoughtDuration = `${elapsedSec}s`;
-          if (stream) {
-            const timerEl = document.getElementById(`synthesis-timer-${assistantMsg.id}`);
-            if (timerEl) timerEl.textContent = `⏱ ${elapsedSec}s`;
-          }
-        }, 200);
-
         try {
           // Pass multi-turn history for infinite contextual chat
           const history = currentSession.messages
@@ -1389,9 +1261,6 @@ export function registerOmniLabStudioGlobals(
             .map(m => ({ role: m.role, content: m.content }));
 
           const chatRes = await generateAIChatResponse(prompt, history, projectContext);
-          clearInterval(thinkTimer);
-          const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-          assistantMsg.thoughtDuration = `${elapsed}s`;
           assistantMsg.content = chatRes.reply;
           assistantMsg.reasoningSteps = chatRes.reasoning;
           assistantMsg.suggestions = chatRes.suggestions;
@@ -1414,7 +1283,6 @@ export function registerOmniLabStudioGlobals(
             countBadge.textContent = `${getAllStudioProjects().length} Saved`;
           }
         } catch (err) {
-          clearInterval(thinkTimer);
           console.error('Studio chat error:', err);
           assistantMsg.isStreaming = false;
           assistantMsg.content = 'Sorry, an error occurred while processing your request. Please try again.';
@@ -1451,48 +1319,8 @@ export function registerOmniLabStudioGlobals(
         stream.scrollTop = stream.scrollHeight;
       }
 
-      const startTime = Date.now();
-
-      // Progressive live synthesis stages for loading bar
-      const stages = [
-        { pct: 30, status: `Selecting optimal ${currentTargetBoard} GPIO pinout mapping...`, step: 2 },
-        { pct: 55, status: 'Routing orthogonal conductor conduits & breadboard power rails...', step: 3 },
-        { pct: 80, status: 'Verifying bill of materials & zero-fault electrical ratings...', step: 4 },
-        { pct: 92, status: 'Compiling production-ready Arduino C++ firmware...', step: 5 }
-      ];
-
-      let stageIdx = 0;
-      const progressTimer = setInterval(() => {
-        if (!isGenerating) {
-          clearInterval(progressTimer);
-          return;
-        }
-        const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
-        if (stageIdx < stages.length) {
-          const s = stages[stageIdx];
-          assistantMsg.progressPct = s.pct;
-          assistantMsg.synthesisStatus = s.status;
-          assistantMsg.currentStepIndex = s.step;
-          assistantMsg.thoughtDuration = `${elapsedSec}s`;
-          stageIdx++;
-        } else {
-          assistantMsg.thoughtDuration = `${elapsedSec}s`;
-        }
-        if (stream) {
-          stream.innerHTML = renderChatStreamHTML();
-          stream.scrollTop = stream.scrollHeight;
-        }
-      }, 420);
-
       try {
         const newProject = await createProjectFromPrompt(prompt, currentTargetBoard);
-        clearInterval(progressTimer);
-
-        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        assistantMsg.thoughtDuration = `${elapsed}s`;
-        assistantMsg.progressPct = 100;
-        assistantMsg.currentStepIndex = 5;
-        assistantMsg.synthesisStatus = 'Hardware synthesis complete!';
         assistantMsg.project = newProject;
         assistantMsg.reasoningSteps = [
           `Analyzed electrical power budget & logic voltage translation for ${newProject.board}`,
@@ -1508,13 +1336,6 @@ export function registerOmniLabStudioGlobals(
         currentSession.targetBoard = (newProject.board as any) || currentTargetBoard;
         currentSession.updatedAt = Date.now();
 
-        // Small cinematic pause so user sees 100% completion
-        if (stream) {
-          stream.innerHTML = renderChatStreamHTML();
-          stream.scrollTop = stream.scrollHeight;
-        }
-
-        await new Promise(res => setTimeout(res, 350));
         assistantMsg.isStreaming = false;
 
         // Save strictly to active user's account repository
@@ -1554,7 +1375,6 @@ export function registerOmniLabStudioGlobals(
 
         showToast(`🎉 "${newProject.title}" synthesized successfully!`);
       } catch (err) {
-        clearInterval(progressTimer);
         console.error('Studio generation error:', err);
         assistantMsg.content = 'Encountered an issue synthesizing the hardware blueprint. Please check your prompt or network configuration.';
         assistantMsg.isStreaming = false;
@@ -1711,8 +1531,8 @@ export function registerOmniLabStudioGlobals(
       }
     },
 
-    toggleProjectSessions: () => {
-      showAllProjectSessions = !showAllProjectSessions;
+    setSidebarTab: (tab: 'chats' | 'projects') => {
+      activeSidebarTab = tab;
       const historyList = document.getElementById('ai-studio-history-list');
       if (historyList) historyList.innerHTML = renderHistoryItemsHTML();
     },
@@ -1746,6 +1566,7 @@ export function registerOmniLabStudioGlobals(
       };
       chatSessions.unshift(newSession);
       activeSessionId = newSession.id;
+      activeSidebarTab = 'chats';
       studioMessages = newSession.messages;
       saveStudioState();
 
@@ -1786,6 +1607,7 @@ export function registerOmniLabStudioGlobals(
       const target = chatSessions.find(s => s.id === sessionId);
       if (!target) return;
       activeSessionId = target.id;
+      activeSidebarTab = target.projectId ? 'projects' : 'chats';
       studioMessages = target.messages;
       currentTargetBoard = target.targetBoard || 'ESP32';
 
