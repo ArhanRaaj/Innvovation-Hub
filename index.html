@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Innovation Hub — Science Projects &amp; Hardware Laboratory | ESP32 &amp; Arduino Uno</title>
+  <meta name="description" content="The Innovation Hub — Precision hardware laboratory created by Arhanraaj. Featuring 12 curated projects for ESP32 and Arduino Uno with interactive circuit schematics, verified wiring netlists, and tested C++ firmware.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Site Navigation -->
+  <header class="site-header">
+    <div class="nav-wrap">
+      <div class="brand-group" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="cursor: pointer;">
+        <div class="brand-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+            <rect x="3" y="3" width="8" height="8" rx="2" stroke="#FFFFFF"/>
+            <rect x="13" y="13" width="8" height="8" rx="2" stroke="#FFFFFF"/>
+            <path d="M7 11v6a2 2 0 0 0 2 2h8" stroke="#FFFFFF" stroke-linecap="round"/>
+            <path d="M17 13V7a2 2 0 0 0-2-2H7" stroke="#FFFFFF" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-texts">
+          <span class="brand-name">The Innovation Hub</span>
+        </div>
+      </div>
+
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="projects.html" class="nav-link">Projects <span class="nav-sup">12</span></a>
+        <a href="#home-featured-section" class="nav-link">Featured</a>
+        <a href="#home-founder-section" class="nav-link">About</a>
+        <a href="javascript:void(0)" class="nav-link" onclick="window.omniLab.openAIArchitectModal()">AI Studio</a>
+      </nav>
+
+      <a href="projects.html" class="nav-cta-glass-btn" style="text-decoration:none;">
+        Explore Projects &rarr;
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section (Atmospheric Monolith Hero) -->
+  <section class="hero-section" id="hero-monolith-section">
+    <!-- Cinematic Dark Monolith Background -->
+    <div class="hero-backdrop-media">
+      <img src="assets/hero-monolith-bg.jpg" alt="3D Geometric Hardware Monolith" class="hero-backdrop-img">
+      <div class="hero-backdrop-overlay"></div>
+    </div>
+
+    <div class="hero-full-layout">
+      <!-- Upper Hero Bar: Services List (Left) + Philosophy Description (Right) -->
+      <div class="hero-upper-row">
+        <div class="hero-services-col">
+          <div class="hero-service-item">/ HARDWARE ARCHITECTURE</div>
+          <div class="hero-service-item">/ EMBEDDED C++ &amp; IOT</div>
+          <div class="hero-service-item">/ ROBOTICS &amp; AI LABS</div>
+        </div>
+        <div class="hero-philosophy-col">
+          <p>Welcome to The Innovation Hub. An open-hardware engineering laboratory founded by Arhanraaj to engineer physical computing, robotics, and embedded systems with verified wiring precision.</p>
+        </div>
+      </div>
+
+      <!-- Lower Hero Bar: Massive Typography + AI Prompt (Left) + Founder Call Card (Right) -->
+      <div class="hero-lower-row">
+        <!-- Bottom Left: Title & Custom Prompt -->
+        <div class="hero-lead-col">
+          <div class="hero-pill-kicker">
+            <span>THE INNOVATION HUB &bull; BY ARHANRAAJ &bull; 12 VERIFIED LABS</span>
+          </div>
+
+          <h1 class="hero-huge-title">
+            Clear. Precise.<br>Engineered.
+          </h1>
+
+          <!-- Integrated Custom AI Prompt Bar -->
+          <div class="hero-ai-glass-bar">
+            <div class="hero-ai-glass-input-wrap" id="hero-ai-wrap">
+              <div class="hero-ai-glass-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </div>
+              <input type="text" id="hero-ai-input" class="hero-ai-glass-input" placeholder="Type custom prompt: 'Build a solar tracking robot with 2 servos'..." onkeydown="if(event.key==='Enter') window.omniLab.submitHeroAIPrompt()">
+              <button id="hero-ai-submit-btn" class="hero-ai-glass-submit" onclick="window.omniLab.submitHeroAIPrompt()">
+                <span>Generate</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+            <div class="hero-ai-glass-pills">
+              <span class="hero-pill-hint">Try:</span>
+              <button class="hero-quick-pill" onclick="window.omniLab.fillHeroPrompt('Touchless Smart Dustbin with HC-SR04 and SG90 servo')">Smart Dustbin</button>
+              <button class="hero-quick-pill" onclick="window.omniLab.fillHeroPrompt('Dual-Axis Solar Tracker with 2 LDRs, servo and ESP32')">Solar Tracker</button>
+              <button class="hero-quick-pill" onclick="window.omniLab.fillHeroPrompt('Gesture Controlled Robot Car with MPU-6050 and L298N')">Gesture Rover</button>
+              <button class="hero-quick-pill" onclick="window.omniLab.fillHeroPrompt('Self-Balancing Inverted Pendulum Robot with PID Control')">Balancing Robot</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Right: Founder Consultation Card -->
+        <div class="hero-founder-card" onclick="window.omniLab.openAIArchitectModal()" role="button" tabindex="0" title="Talk with Arhanraaj &bull; Launch AI Studio">
+          <img src="assets/arhanraaj-pfp.jpg" alt="Arhanraaj" class="founder-card-avatar">
+          <div class="founder-card-details">
+            <span class="founder-card-name">Talk with Arhanraaj</span>
+            <span class="founder-card-role">FOUNDER &bull; THE INNOVATION HUB</span>
+            <div class="founder-card-btn">
+              <span>Launch AI Studio</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Metrics Stats Bar -->
+  <section class="container" style="margin-top: 40px; margin-bottom: 80px;">
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <rect x="9" y="9" width="6" height="6"/>
+            <line x1="9" y1="1" x2="9" y2="4"/>
+            <line x1="15" y1="1" x2="15" y2="4"/>
+            <line x1="9" y1="20" x2="9" y2="23"/>
+            <line x1="15" y1="20" x2="15" y2="23"/>
+            <line x1="20" y1="9" x2="23" y2="9"/>
+            <line x1="20" y1="14" x2="23" y2="14"/>
+            <line x1="1" y1="9" x2="4" y2="9"/>
+            <line x1="1" y1="14" x2="4" y2="14"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-val" id="stat-total-count">12</div>
+          <div class="stat-label">Curated Science Projects</div>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-val" id="stat-uno-count">6</div>
+          <div class="stat-label">Arduino Uno Projects</div>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <circle cx="12" cy="20" r="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-val" id="stat-esp-count">6</div>
+          <div class="stat-label">ESP32 &amp; IoT Projects</div>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <polyline points="9 12 11 14 15 10"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-val">100%</div>
+          <div class="stat-label">Verified Wiring &amp; Code</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Flagship Science Projects Showcase Grid -->
+  <section class="home-section" id="home-featured-section">
+    <div class="container">
+      <div class="section-header-center">
+        <div class="section-kicker">
+          <span class="section-kicker-dot"></span>
+          <span>CURATED FLAGSHIP BUILDS</span>
+        </div>
+        <h2 class="section-title-large">Featured Science Projects</h2>
+        <p class="section-subtitle">
+          Production-grade hardware experiments with photorealistic component views, netlist tables, and tested C++ firmware.
+        </p>
+      </div>
+
+      <!-- 3 Flagship Projects Mount -->
+      <div id="home-featured-grid" class="featured-projects-grid"></div>
+
+      <div style="text-align: center;">
+        <a href="projects.html" class="nav-cta-glass-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:10px; font-size:0.95rem; padding:14px 32px;">
+          <span>Explore All 12 Projects in Repository</span>
+          &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technical Capabilities & Innovation Pillars -->
+  <section class="home-section" id="home-pillars-section">
+    <div class="container">
+      <div class="section-header-center">
+        <div class="section-kicker">
+          <span class="section-kicker-dot"></span>
+          <span>PRODUCTION-GRADE CAPABILITIES</span>
+        </div>
+        <h2 class="section-title-large">Architectural Pillars</h2>
+        <p class="section-subtitle">
+          Engineered to eliminate physical computing guesswork with zero-conflict netlists and validated electrical schematics.
+        </p>
+      </div>
+
+      <div class="home-pillars-grid">
+        <div class="pillar-card">
+          <div class="pillar-icon-box">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 3v18"/>
+              <path d="M3 12h18"/>
+            </svg>
+          </div>
+          <h3 class="pillar-title">Deterministic Routing</h3>
+          <p class="pillar-desc">Orthogonal conduit routing with channel clearance prevents wire cross-slicing across electronic modules.</p>
+          <span class="pillar-badge">0 Wiring Conflicts</span>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon-box">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+              <path d="M15 3v18"/>
+            </svg>
+          </div>
+          <h3 class="pillar-title">Dual CAD Schematics</h3>
+          <p class="pillar-desc">Toggle instantly between photorealistic physical components and clean technical ISO vector blueprints.</p>
+          <span class="pillar-badge">Real &bull; Vector Modes</span>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon-box">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <h3 class="pillar-title">Verified C++ Firmware</h3>
+          <p class="pillar-desc">Ready-to-flash non-blocking code tested for Arduino Uno ATmega328P and ESP32 Dual-Core architectures.</p>
+          <span class="pillar-badge">Compilable Out-of-the-Box</span>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon-box">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <h3 class="pillar-title">Generative AI Studio</h3>
+          <p class="pillar-desc">Describe any custom electronics idea to automatically generate schematics, pinout tables, and firmware in seconds.</p>
+          <span class="pillar-badge">Groq &bull; Gemini &bull; OpenRouter</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Meet The Founder Section (Arhanraaj) -->
+  <section class="home-section" id="home-founder-section">
+    <div class="container">
+      <div class="founder-spotlight-box">
+        <div class="founder-portrait-wrap">
+          <img src="assets/arhanraaj-pfp.jpg" alt="Arhanraaj - Founder of The Innovation Hub" class="founder-spotlight-img">
+          <span class="founder-spotlight-badge">LEAD ARCHITECT</span>
+        </div>
+
+        <div class="founder-spotlight-content">
+          <div class="section-kicker" style="margin-bottom:0; align-self:flex-start;">
+            <span class="section-kicker-dot"></span>
+            <span>FOUNDER &bull; THE INNOVATION HUB</span>
+          </div>
+          <h2 class="founder-spotlight-name">Arhanraaj</h2>
+          <span class="founder-spotlight-role">Hardware Systems Architect &amp; Roboticist</span>
+          <p class="founder-spotlight-quote">
+            "The Innovation Hub was created to eliminate the guesswork and friction from physical computing. Every blueprint here features verified pin mappings, authentic CAD vector schematics, and tested C++ firmware ready to run on physical hardware."
+          </p>
+
+          <div class="founder-credentials-row">
+            <span class="founder-cred-pill">Embedded C++</span>
+            <span class="founder-cred-pill">ESP32 &amp; Arduino Uno</span>
+            <span class="founder-cred-pill">Kinematics &amp; Control</span>
+            <span class="founder-cred-pill">Open Source Hardware</span>
+          </div>
+
+          <div style="margin-top: 12px; display:flex; gap:12px; flex-wrap:wrap;">
+            <a href="projects.html" class="btn-view-project" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+              <span>Explore Projects Repository</span>
+              &rarr;
+            </a>
+            <button class="nav-cta-glass-btn" onclick="window.omniLab.openAIArchitectModal()">
+              Custom AI Studio
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Project Details Modal (Quick Inspect) -->
+  <div id="project-modal" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <span id="modal-board-badge" class="board-tag esp32">ESP32</span>
+          <h2 id="modal-title" class="modal-main-title">Project Details</h2>
+        </div>
+
+        <div class="modal-header-actions">
+          <button id="modal-bookmark-btn" class="modal-action-btn" title="Bookmark project">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            Save
+          </button>
+          <button id="modal-print-btn" class="modal-action-btn" title="Print lab sheet">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
+          <button id="modal-close-btn" class="modal-close-btn" title="Close dialog">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Display Hardware Selector Bar -->
+      <div id="display-mode-bar" class="display-mode-bar">
+        <div class="display-mode-left">
+          <span class="display-mode-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </span>
+          <div>
+            <div class="display-mode-title">Display Hardware Option</div>
+            <div class="display-mode-desc">Switch between 0.96" OLED and 16x2 I2C LCD. Schematic, pinouts, and code adapt instantly!</div>
+          </div>
+        </div>
+        <div class="display-mode-right">
+          <button id="btn-toggle-oled" class="disp-mode-btn active" onclick="window.omniLab.setDisplayHardware('oled')">
+            <span class="disp-mode-dot"></span>
+            0.96" I2C OLED (SSD1306)
+          </button>
+          <button id="btn-toggle-lcd" class="disp-mode-btn" onclick="window.omniLab.setDisplayHardware('lcd')">
+            <span class="disp-mode-dot"></span>
+            16x2 I2C Character LCD
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Tabs Header -->
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="tab-circuit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+          1. Circuit Schematic
+        </button>
+        <button class="modal-tab-btn" data-tab="tab-wiring">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          2. Pin Connections Table
+        </button>
+        <button class="modal-tab-btn" data-tab="tab-code">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          3. C++ Firmware &amp; Code
+        </button>
+        <button class="modal-tab-btn" data-tab="tab-principle">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          4. Scientific Principle
+        </button>
+        <button class="modal-tab-btn" data-tab="tab-assembly">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          5. Assembly &amp; BOM
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="modal-content-area">
+        <!-- Tab 1: Circuit Diagram -->
+        <div id="tab-circuit" class="tab-pane active">
+          <div class="circuit-toolbar">
+            <div class="toolbar-group">
+              <span class="toolbar-label">VIEW MODE:</span>
+              <button id="btn-view-real" class="route-btn active" onclick="window.omniLab.setViewMode('real')">
+                <span class="route-dot"></span> Real Components
+              </button>
+              <button id="btn-view-vector" class="route-btn" onclick="window.omniLab.setViewMode('vector')">
+                <span class="route-dot"></span> Blueprint Vector
+              </button>
+            </div>
+            <div class="toolbar-group">
+              <span class="toolbar-label">ROUTING STYLE:</span>
+              <button id="btn-route-ortho" class="route-btn active" onclick="window.omniLab.setWireRoutingStyle('orthogonal')">
+                <span class="route-dot"></span> Orthogonal Conduit
+              </button>
+              <button id="btn-route-curved" class="route-btn" onclick="window.omniLab.setWireRoutingStyle('curved')">
+                <span class="route-dot"></span> S-Curve Harness
+              </button>
+            </div>
+            <div class="toolbar-actions">
+              <button class="schematic-tool-btn" onclick="window.omniLab.downloadSchematicSVG()" title="Export Vector SVG">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export SVG
+              </button>
+            </div>
+          </div>
+
+          <div class="schematic-box" style="border-top-left-radius:0; border-top-right-radius:0;">
+            <div id="schematic-svg-mount" class="schematic-svg-wrapper"></div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Wiring Table -->
+        <div id="tab-wiring" class="tab-pane">
+          <h4 class="section-h4">Hardware Pin Connections &amp; Specifications</h4>
+          <p style="font-size:0.9rem; color:#A3A3A3; margin-bottom:12px;">
+            Follow each net connection precisely. Hover over any row to highlight the conductor path on the schematic!
+          </p>
+          <div id="wiring-table-mount"></div>
+        </div>
+
+        <!-- Tab 3: C++ Firmware Code -->
+        <div id="tab-code" class="tab-pane">
+          <div class="code-tab-header">
+            <div>
+              <h4 class="section-h4" style="margin-bottom:2px;">Production-Ready C++ Firmware</h4>
+              <p class="section-subtext">Compiles out-of-the-box in Arduino IDE, PlatformIO, or ESP-IDF</p>
+            </div>
+            <button id="btn-copy-code" class="btn-copy-code" title="Copy code to clipboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copy Code</span>
+            </button>
+          </div>
+          <div id="code-block-mount"></div>
+        </div>
+
+        <!-- Tab 4: Scientific Principle -->
+        <div id="tab-principle" class="tab-pane">
+          <div id="principle-tab-mount"></div>
+        </div>
+
+        <!-- Tab 5: Assembly & BOM -->
+        <div id="tab-assembly" class="tab-pane">
+          <div id="assembly-tab-mount"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Architect Modal (Antigravity & ChatGPT Hardware Studio) -->
+  <div id="ai-architect-modal" class="modal-backdrop">
+    <!-- Dynamically rendered by renderAIStudioModal -->
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-left-col">
+        <div class="footer-brand-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          The Innovation Hub &bull; Open Hardware Repository
+        </div>
+        <p class="footer-brand-desc">
+          Curated educational science and engineering laboratory platform for ESP32 &amp; Arduino Uno makers, educators, and innovators.
+        </p>
+      </div>
+
+      <div class="footer-creator-badge">
+        <div class="footer-creator-avatar-wrap">
+          <img src="assets/arhanraaj-pfp.jpg" alt="Arhanraaj" class="footer-creator-avatar" />
+          <span class="footer-creator-status-dot" title="Lead Architect Online"></span>
+        </div>
+        <div class="footer-creator-info">
+          <span class="footer-creator-label">PROJECT ARCHITECT</span>
+          <span class="footer-creator-name">Made by Arhanraaj</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main TypeScript Entry Point -->
+  <script type="module" src="src/main.ts"></script>
+</body>
+</html>

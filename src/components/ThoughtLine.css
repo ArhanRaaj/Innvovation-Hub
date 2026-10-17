@@ -1,0 +1,86 @@
+.thought-line {
+  --tl-size: 15px;
+  --tl-color: #c084fc;
+  --tl-dim: rgba(192, 132, 252, 0.45);
+  font-family: inherit;
+  font-size: var(--tl-size);
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  user-select: none;
+}
+
+.thought-line__header {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.thought-line__glyph {
+  color: var(--tl-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: tl-sparkle 1.8s ease-in-out infinite;
+}
+
+@keyframes tl-sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+  50% { transform: scale(1.2) rotate(15deg); opacity: 1; filter: drop-shadow(0 0 6px var(--tl-color)); }
+}
+
+.thought-line__label {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  background: linear-gradient(90deg, #ffffff 0%, var(--tl-color) 50%, #ffffff 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: tl-shimmer 2.2s linear infinite;
+}
+
+@keyframes tl-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.thought-line__timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  color: var(--tl-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.thought-line__steps {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0 6px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-left: 1.5px dashed rgba(192, 132, 252, 0.25);
+  margin-left: 7px;
+}
+
+.thought-line__step {
+  font-size: 0.88em;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thought-line__step[data-active] {
+  color: #ffffff;
+  font-weight: 500;
+}
