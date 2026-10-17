@@ -63,6 +63,7 @@ let isGenerating = false;
 let activeStarterCategory: string = 'all';
 let currentTargetBoard: 'ESP32' | 'Arduino Uno' = 'ESP32';
 let historySearchQuery: string = '';
+let showAllProjectSessions = false;
 let activeMountContainerId: string = 'ai-architect-modal';
 
 export interface StarterPromptItem {
@@ -553,7 +554,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
           <div style="padding:0 2px;">
             <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; background:#161616; border:1px solid #262626;">
               <svg style="width:13px; height:13px; color:#666666; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" placeholder="Search projects &amp; chats..." style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:11px; color:#ffffff; padding:0;" oninput="window.omniLabStudio.filterHistory(this.value)" />
+              <input type="text" placeholder="Find a chat or project" style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:12px; color:#ffffff; padding:0;" oninput="window.omniLabStudio.filterHistory(this.value)" />
             </div>
           </div>
 
@@ -704,44 +705,56 @@ function renderHistoryItemsHTML(): string {
     );
   }
 
-  // Sort pinned general sessions on top
-  filteredGeneral.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+  // Keep recent conversations at the top, with pinned items taking priority.
+  filteredGeneral.sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.updatedAt - a.updatedAt);
+  filteredProjects.sort((a, b) => b.updatedAt - a.updatedAt);
+
+  const isSearching = q.length > 0;
+  const visibleProjectSessions = isSearching || showAllProjectSessions
+    ? filteredProjects
+    : filteredProjects.slice(0, 5);
+  const activeProjectSession = filteredProjects.find(s => s.id === activeSessionId);
+  if (!isSearching && !showAllProjectSessions && activeProjectSession && !visibleProjectSessions.includes(activeProjectSession)) {
+    visibleProjectSessions[visibleProjectSessions.length - 1] = activeProjectSession;
+  }
+  const hasMoreProjects = !isSearching && filteredProjects.length > 5;
 
   const htmlChunks: string[] = [];
 
-  // Section 1: Project Laboratories
+  // Put normal conversations first so the studio reads like a familiar chatbot.
   htmlChunks.push(`
     <div class="studio-sidebar-section">
-      <div class="studio-sidebar-section-header" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
+      <div class="studio-sidebar-section-header studio-sidebar-section-heading" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
         <div style="display:flex; align-items:center; gap:6px;">
-          <span class="studio-section-mark" aria-hidden="true">P</span>
-          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">Project Laboratories</span>
+          <span class="studio-section-mark" aria-hidden="true">C</span>
+          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">Recent chats</span>
         </div>
-        <span class="text-[9px] px-1.5 py-0.5 rounded bg-[#1e1f20] text-[#8ab4f8] font-mono border border-white/5 font-semibold">${filteredProjects.length}</span>
+        <span class="studio-count">${filteredGeneral.length}</span>
       </div>
       <div class="space-y-0.5" style="display:flex; flex-direction:column; gap:2px;">
-        ${filteredProjects.map(s => renderProjectSessionItemHTML(s)).join('')}
+        ${filteredGeneral.length === 0 ? `
+          <div class="studio-sidebar-empty">No chats yet. Start one above.</div>
+        ` : filteredGeneral.map(s => renderSessionItemHTML(s)).join('')}
       </div>
     </div>
   `);
 
-  // Section 2: General Conversations
+  // Keep project labs compact, with an explicit way to browse the full list.
   htmlChunks.push(`
-    <div class="studio-sidebar-section" style="margin-top:10px;">
-      <div class="studio-sidebar-section-header" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
+    <div class="studio-sidebar-section studio-projects-section" style="margin-top:18px;">
+      <div class="studio-sidebar-section-header studio-sidebar-section-heading" style="display:flex; align-items:center; justify-content:space-between; padding:6px 6px 3px 6px;">
         <div style="display:flex; align-items:center; gap:6px;">
-          <span class="studio-section-mark" aria-hidden="true">C</span>
-          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">General Chats</span>
+          <span class="studio-section-mark" aria-hidden="true">P</span>
+          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9aa0a6;">Project labs</span>
         </div>
-        <button class="p-1 rounded hover:bg-[#202124] text-[#8ab4f8] hover:text-white transition-colors cursor-pointer text-xs" onclick="window.omniLabStudio.createNewChat()" title="Start New Chat" style="background:transparent; border:none; cursor:pointer; font-weight:600; padding:1px 4px;">
-          + New Chat
-        </button>
+        <span class="studio-count">${filteredProjects.length}</span>
       </div>
       <div class="space-y-0.5" style="display:flex; flex-direction:column; gap:2px;">
-        ${filteredGeneral.length === 0 ? `
-          <div class="text-[11px] text-[#5f6368] italic px-2 py-1.5">No general chats yet</div>
-        ` : filteredGeneral.map(s => renderSessionItemHTML(s)).join('')}
+        ${visibleProjectSessions.length === 0 ? `
+          <div class="studio-sidebar-empty">${isSearching ? 'No matching projects' : 'No project labs yet'}</div>
+        ` : visibleProjectSessions.map(s => renderProjectSessionItemHTML(s)).join('')}
       </div>
+      ${hasMoreProjects ? `<button class="studio-show-more" onclick="window.omniLabStudio.toggleProjectSessions()">${showAllProjectSessions ? 'Show fewer' : `Show all ${filteredProjects.length} projects`}<span aria-hidden="true">${showAllProjectSessions ? '−' : '+'}</span></button>` : ''}
     </div>
   `);
 
@@ -759,7 +772,6 @@ function renderProjectSessionItemHTML(s: ChatSession): string {
       class="studio-chat-session-item group ${isActive ? 'active' : ''}" 
       onclick="window.omniLabStudio.switchSession('${s.id}')"
       title="${escapeForAttr(s.title)}"
-      style="${isActive ? 'background: #282a2d !important; border-color: rgba(66, 133, 244, 0.4);' : ''}"
     >
       <div class="flex items-center space-x-2 min-w-0 flex-1" style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
         <span class="studio-session-mark" aria-hidden="true">•</span>
@@ -1261,6 +1273,7 @@ declare global {
       filterCategory: (cat: string) => void;
       toggleTargetBoard: () => void;
       filterHistory: (query: string) => void;
+      toggleProjectSessions: () => void;
       togglePinoutCheatsheet: () => void;
       deleteHistoryItem: (id: string, e: MouseEvent) => void;
 
@@ -1696,6 +1709,12 @@ export function registerOmniLabStudioGlobals(
       if (countBadge) {
         countBadge.textContent = `${getAllStudioProjects().length} Saved`;
       }
+    },
+
+    toggleProjectSessions: () => {
+      showAllProjectSessions = !showAllProjectSessions;
+      const historyList = document.getElementById('ai-studio-history-list');
+      if (historyList) historyList.innerHTML = renderHistoryItemsHTML();
     },
 
     togglePinoutCheatsheet: () => {},

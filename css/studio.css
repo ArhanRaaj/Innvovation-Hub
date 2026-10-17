@@ -18,16 +18,16 @@
 }
 
 .studio-page #ai-studio-shell > aside {
-  width: 276px !important;
-  min-width: 276px !important;
-  padding: 20px 14px 14px !important;
-  background: #111b2b !important;
-  border-right: 1px solid #25334a !important;
-  color: #eaf0fa !important;
+  width: 288px !important;
+  min-width: 288px !important;
+  padding: 18px 13px 13px !important;
+  background: #f2f5f9 !important;
+  border-right: 1px solid #e0e6ee !important;
+  color: #263448 !important;
 }
 
-.studio-page #ai-studio-shell > aside input { color: #f3f6fb !important; }
-.studio-page #ai-studio-shell > aside input::placeholder { color: #8794a8 !important; }
+.studio-page #ai-studio-shell > aside input { color: #28374b !important; }
+.studio-page #ai-studio-shell > aside input::placeholder { color: #8794a6 !important; }
 .studio-page #ai-studio-shell > aside button,
 .studio-page #ai-studio-shell > aside a { transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease !important; }
 .studio-page #ai-studio-shell > aside > div:first-child > button {
@@ -41,43 +41,79 @@
 }
 .studio-page #ai-studio-shell > aside > div:first-child > button:hover { background: #3475f5 !important; transform: translateY(-1px); }
 .studio-page #ai-studio-shell > aside > div:first-child > div:nth-of-type(2) > div {
-  background: #182438 !important;
-  border: 1px solid #2d3b50 !important;
+  background: #fff !important;
+  border: 1px solid #dce3ec !important;
   border-radius: 10px !important;
+  min-height: 38px !important;
 }
-.studio-page #ai-studio-shell .studio-sidebar-section-header { color: #a9b5c7 !important; }
+.studio-page #ai-studio-shell .studio-sidebar-section-header { color: #68788e !important; }
 .studio-page #ai-studio-shell .studio-sidebar-section-header span { color: inherit !important; }
 .studio-page #ai-studio-shell .studio-section-mark {
   display: inline-grid;
-  width: 19px;
-  height: 19px;
+  width: 20px;
+  height: 20px;
   place-items: center;
-  border: 1px solid #34445b;
-  border-radius: 6px;
-  background: #1b2a40;
-  color: #9fb6d6;
+  border: 1px solid #d8e1ec;
+  border-radius: 7px;
+  background: #fff;
+  color: #567092;
   font-size: 9px !important;
   font-weight: 700;
 }
-.studio-page #ai-studio-shell .studio-session-mark { color: #8295b0 !important; font-size: 17px !important; }
+.studio-page #ai-studio-shell .studio-session-mark { color: #8391a5 !important; font-size: 16px !important; }
 .studio-page #ai-studio-shell .studio-chat-session-item {
   border: 1px solid transparent !important;
-  border-radius: 9px !important;
-  min-height: 36px !important;
+  border-radius: 8px !important;
+  min-height: 35px !important;
   padding: 7px 8px !important;
-  color: #c1ccdc !important;
+  color: #43536a !important;
 }
-.studio-page #ai-studio-shell .studio-chat-session-item:hover { background: #1c2a40 !important; }
+.studio-page #ai-studio-shell .studio-chat-session-item:hover { background: #e7edf5 !important; }
 .studio-page #ai-studio-shell .studio-chat-session-item.active {
-  background: #203553 !important;
-  border-color: #355477 !important;
+  background: #e2edff !important;
+  border-color: #c9dcfb !important;
 }
-.studio-page #ai-studio-shell .studio-chat-session-item .truncate { color: #e7edf7 !important; }
-.studio-page #ai-studio-shell > aside > div:last-child { border-color: #2a394f !important; }
+.studio-page #ai-studio-shell .studio-chat-session-item .truncate { color: #3a4a60 !important; }
+.studio-page #ai-studio-shell .studio-chat-session-item.active .truncate { color: #1d4f9a !important; }
+.studio-page #ai-studio-shell .studio-sidebar-section-heading { margin-bottom: 5px; }
+.studio-page #ai-studio-shell .studio-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dce3ec;
+  border-radius: 999px;
+  background: #fff;
+  color: #66768c !important;
+  font: 600 10px/1 'JetBrains Mono', monospace;
+}
+.studio-page #ai-studio-shell .studio-sidebar-empty { padding: 9px 10px; color: #8491a3; font-size: 11px; }
+.studio-page #ai-studio-shell .studio-show-more {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 5px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #3868ad;
+  cursor: pointer;
+  font: 600 11px/1.3 inherit;
+  text-align: left;
+}
+.studio-page #ai-studio-shell .studio-show-more:hover { background: #e7edf5; border-color: #dce3ec; }
+.studio-page #ai-studio-shell .studio-projects-section { padding-top: 4px; border-top: 1px solid #dfe5ed; }
+.studio-page #ai-studio-shell > aside > div:last-child { border-color: #dce3ec !important; }
 .studio-page #ai-studio-shell > aside > div:last-child a,
-.studio-page #ai-studio-shell > aside > div:last-child button { color: #a9b5c7 !important; }
+.studio-page #ai-studio-shell > aside > div:last-child button { color: #596b83 !important; }
+.studio-page #ai-studio-shell > aside > div:last-child a { color: #425875 !important; }
 .studio-page #ai-studio-shell > aside > div:last-child a:hover,
-.studio-page #ai-studio-shell > aside > div:last-child button:hover { color: #fff !important; }
+.studio-page #ai-studio-shell > aside > div:last-child button:hover { color: #14233a !important; }
+.studio-page #ai-studio-shell > aside > div:last-child a:hover { color: #1d4f9a !important; background: #e7edf5 !important; }
 
 .studio-page #ai-studio-shell > main {
   background: var(--studio-canvas) !important;
