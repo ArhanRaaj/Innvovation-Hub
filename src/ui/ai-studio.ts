@@ -427,15 +427,15 @@ function renderWorkspaceHeaderHTML(): string {
 
   if (active.projectId) {
     const isESP = active.targetBoard === 'ESP32';
-    const boardColor = isESP ? '#38bdf8' : '#34d399';
-    const boardBg = isESP ? 'rgba(56, 189, 248, 0.15)' : 'rgba(52, 211, 153, 0.15)';
-    const boardBorder = isESP ? 'rgba(56, 189, 248, 0.3)' : 'rgba(52, 211, 153, 0.3)';
+    const boardColor = isESP ? '#60a5fa' : '#22c55e';
+    const boardBg = isESP ? 'rgba(59, 130, 246, 0.15)' : 'rgba(34, 197, 94, 0.15)';
+    const boardBorder = isESP ? 'rgba(59, 130, 246, 0.3)' : 'rgba(34, 197, 94, 0.3)';
 
     return `
-      <header id="studio-workspace-header" class="h-12 border-b border-[#282a2d] px-4 flex items-center justify-between shrink-0" style="height:48px; border-bottom:1px solid #282a2d; padding:0 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
-        <div class="flex items-center space-x-2.5 min-w-0" style="display:flex; align-items:center; gap:8px; min-width:0;">
-          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; background:rgba(66, 133, 244, 0.15); color:#8ab4f8; padding:3px 8px; border-radius:9999px; border:1px solid rgba(66, 133, 244, 0.3); white-space:nowrap;">🔬 Project Lab</span>
-          <span class="text-sm text-white font-semibold truncate" id="studio-active-title" style="font-size:14px; font-weight:600; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+      <header id="studio-workspace-header" style="height:52px; border-bottom:1px solid #222222; background:#0a0a0a; padding:0 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+          <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; background:rgba(59, 130, 246, 0.15); color:#60a5fa; padding:3px 8px; border-radius:9999px; border:1px solid rgba(59, 130, 246, 0.3); white-space:nowrap;">🔬 Project Lab</span>
+          <span class="text-sm font-semibold truncate" id="studio-active-title" style="font-size:14px; font-weight:600; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
             ${escapeHtml(active.title)}
           </span>
           <span style="font-size:10px; padding:2px 8px; border-radius:4px; font-family:monospace; font-weight:700; color:${boardColor}; background:${boardBg}; border:1px solid ${boardBorder}; white-space:nowrap;">
@@ -443,17 +443,16 @@ function renderWorkspaceHeaderHTML(): string {
           </span>
         </div>
 
-        <div class="flex items-center space-x-2 text-xs" style="display:flex; align-items:center; gap:8px; font-size:12px;">
-          <button class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#202124] hover:bg-[#282a2d] text-[#e8eaed] border border-[#3c4043] transition-colors cursor-pointer" onclick="window.omniLabStudio.inspectActiveProject()" title="View Schematic & Circuit Diagram" style="display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:8px; background:#202124; color:#e8eaed; border:1px solid #3c4043; cursor:pointer;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ab4f8" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+          <button style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; background:#1a1a1a; color:#e0e0e0; border:1px solid #333333; cursor:pointer; font-size:12px; transition:all 0.15s ease;" onmouseover="this.style.background='#252525'; this.style.borderColor='#3b82f6';" onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#333333';" onclick="window.omniLabStudio.inspectActiveProject()" title="View Schematic & Circuit Diagram">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
             <span>Schematic</span>
           </button>
-          <button class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#202124] hover:bg-[#282a2d] text-[#e8eaed] border border-[#3c4043] transition-colors cursor-pointer" onclick="window.omniLabStudio.copyLatestCode()" title="Copy Arduino C++ Firmware" style="display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:8px; background:#202124; color:#e8eaed; border:1px solid #3c4043; cursor:pointer;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <button style="display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; background:#1a1a1a; color:#e0e0e0; border:1px solid #333333; cursor:pointer; font-size:12px; transition:all 0.15s ease;" onmouseover="this.style.background='#252525'; this.style.borderColor='#22c55e';" onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#333333';" onclick="window.omniLabStudio.copyLatestCode()" title="Copy Arduino C++ Firmware">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
             <span>Copy Code</span>
           </button>
-          <div id="studio-header-avatar-btn" class="w-7 h-7 rounded-full bg-[#0284c7] hover:bg-[#00f2fe] hover:text-black text-white flex items-center justify-center font-semibold text-xs cursor-pointer transition-colors shadow-sm" style="width:28px; height:28px; border-radius:50%; background:#0284c7; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; cursor:pointer;" title="${userTitle}" onclick="window.omniLabStudio.showAuthorInfo()">${userInitial}</div>
-          <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer ml-1 text-lg leading-none" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:18px;" onclick="if(window.omniLab?.closeAIArchitectModal && !window.location.pathname.includes('studio')){window.omniLab.closeAIArchitectModal();}else{window.location.href='/projects';}" title="Exit Studio">&times;</button>
+          <div id="studio-header-avatar-btn" style="width:28px; height:28px; border-radius:50%; background:#0284c7; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; cursor:pointer;" title="${userTitle}" onclick="window.omniLabStudio.showAuthorInfo()">${userInitial}</div>
         </div>
       </header>
     `;
@@ -461,20 +460,18 @@ function renderWorkspaceHeaderHTML(): string {
 
   // General Engineering Chat Header
   return `
-    <header id="studio-workspace-header" class="h-12 border-b border-[#282a2d] px-5 flex items-center justify-between shrink-0" style="height:48px; border-bottom:1px solid #282a2d; padding:0 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
-      <div class="flex items-center space-x-2 cursor-pointer group" style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="window.omniLabStudio.renamePrompt()" title="Click to rename prompt">
-        <span class="text-sm text-white font-medium group-hover:text-[#8ab4f8] transition-colors" id="studio-active-title" style="font-size:14px; font-weight:500; color:#ffffff;">${escapeHtml(active.title)}</span>
-        <svg class="w-3.5 h-3.5 text-[#9aa0a6] group-hover:text-white transition-colors" style="width:14px; height:14px; color:#9aa0a6;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    <header id="studio-workspace-header" style="height:52px; border-bottom:1px solid #222222; background:#0a0a0a; padding:0 20px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:8px; cursor:pointer; min-width:0;" onclick="window.omniLabStudio.renamePrompt()" title="Click to rename chat">
+        <span class="text-sm font-medium" id="studio-active-title" style="font-size:14px; font-weight:500; color:#ffffff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(active.title)}</span>
+        <svg style="width:13px; height:13px; color:#666666; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       </div>
 
-      <div class="flex items-center space-x-3 text-xs" style="display:flex; align-items:center; gap:12px; font-size:12px;">
-        <button id="studio-compare-btn" class="flex items-center space-x-1.5 px-3 py-1 rounded bg-[#202124] hover:bg-[#282a2d] text-[#e8eaed] border border-[#3c4043] transition-colors cursor-pointer" style="display:flex; align-items:center; gap:6px; padding:4px 12px; border-radius:4px; background:#202124; color:#e8eaed; border:1px solid #3c4043; cursor:pointer;" onclick="window.omniLabStudio.toggleTargetBoard()" title="Toggle Target Architecture (${currentTargetBoard})">
-          <span class="text-[#8ab4f8]">→</span>
-          <span id="studio-compare-text">Compare (${currentTargetBoard})</span>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button style="display:flex; align-items:center; gap:6px; padding:6px 14px; border-radius:8px; background:#1a1a1a; color:#ffffff; border:1px solid #333333; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.15s ease;" onmouseover="this.style.background='#252525'; this.style.borderColor='#3b82f6';" onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#333333';" onclick="window.omniLabStudio.createNewChat()" title="Start New Chat">
+          <span style="color:#60a5fa; font-weight:bold; font-size:14px; line-height:1;">+</span>
+          <span>New Chat</span>
         </button>
-        <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer text-base" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:16px;" onclick="window.omniLabStudio.createNewChat()" title="Start New Chat">⋮</button>
-        <div id="studio-header-avatar-btn" class="w-7 h-7 rounded-full bg-[#0284c7] hover:bg-[#00f2fe] hover:text-black text-white flex items-center justify-center font-semibold text-xs cursor-pointer transition-colors shadow-sm" style="width:28px; height:28px; border-radius:50%; background:#0284c7; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; cursor:pointer;" title="${userTitle}" onclick="window.omniLabStudio.showAuthorInfo()">${userInitial}</div>
-        <button class="text-[#9aa0a6] hover:text-white p-1 bg-transparent border-0 cursor-pointer ml-1 text-lg leading-none" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:18px;" onclick="if(window.omniLab?.closeAIArchitectModal && !window.location.pathname.includes('studio')){window.omniLab.closeAIArchitectModal();}else{window.location.href='/projects';}" title="Exit Studio">&times;</button>
+        <div id="studio-header-avatar-btn" style="width:28px; height:28px; border-radius:50%; background:#0284c7; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; cursor:pointer;" title="${userTitle}" onclick="window.omniLabStudio.showAuthorInfo()">${userInitial}</div>
       </div>
     </header>
   `;
@@ -495,27 +492,27 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
 
   if (!currentUser) {
     modal.innerHTML = `
-      <div class="google-ai-studio flex h-screen w-full bg-[#090A0F] text-[#e8eaed] items-center justify-center p-6 select-none" id="ai-studio-shell" style="display:flex; height:100vh; width:100%; background:#090A0F; align-items:center; justify-content:center; box-sizing:border-box;">
-        <div class="max-w-md w-full bg-[#13141B] border border-white/10 rounded-2xl p-8 text-center shadow-2xl flex flex-col items-center" style="max-width:440px; width:100%; background:#13141B; border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:36px; text-align:center; box-sizing:border-box;">
-          <div class="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center mb-5 text-cyan-400" style="width:64px; height:64px; border-radius:50%; background:rgba(0, 242, 254, 0.1); border:1px solid rgba(0, 242, 254, 0.3); display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#00f2fe;">
+      <div class="google-ai-studio flex h-screen w-full bg-[#0a0a0a] text-[#ffffff] items-center justify-center p-6 select-none" id="ai-studio-shell" style="display:flex; height:100vh; width:100%; background:#0a0a0a; align-items:center; justify-content:center; box-sizing:border-box;">
+        <div class="max-w-md w-full bg-[#111111] border border-[#222222] rounded-2xl p-8 text-center shadow-2xl flex flex-col items-center" style="max-width:440px; width:100%; background:#111111; border:1px solid #222222; border-radius:20px; padding:36px; text-align:center; box-sizing:border-box;">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(59, 130, 246, 0.12); border:1px solid rgba(59, 130, 246, 0.3); display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#60a5fa;">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
           </div>
-          <span class="text-xs uppercase tracking-widest font-mono text-cyan-400 font-bold mb-2" style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:#00f2fe; font-weight:700; margin-bottom:8px; display:block;">THE INNOVATION HUB &bull; AI HARDWARE STUDIO</span>
-          <h2 class="text-2xl font-bold text-white mb-2" style="color:#ffffff; font-size:24px; font-weight:700; margin-bottom:8px;">Sign In to Use AI Studio</h2>
-          <p class="text-sm text-gray-400 mb-6 leading-relaxed" style="color:#94a3b8; font-size:14px; line-height:1.5; margin-bottom:24px;">Please log in to your engineer account to start designing custom hardware architectures, interactive schematics, and compiling C++ firmware.</p>
-          <div class="flex flex-col gap-3 w-full" style="display:flex; flex-direction:column; gap:12px; width:100%;">
-            <button onclick="window.innovationHubAuth.openAuthModal('signin')" class="w-full py-3 px-4 bg-white hover:bg-cyan-400 text-black font-semibold rounded-xl transition-all cursor-pointer shadow-lg" style="width:100%; padding:12px 16px; background:#ffffff; color:#000000; font-weight:600; border-radius:12px; border:none; cursor:pointer;">
+          <span style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:#60a5fa; font-weight:700; margin-bottom:8px; display:block; font-family:monospace;">THE INNOVATION HUB &bull; AI HARDWARE STUDIO</span>
+          <h2 style="color:#ffffff; font-size:24px; font-weight:700; margin-bottom:8px;">Sign In to Use AI Studio</h2>
+          <p style="color:#a0a0a0; font-size:14px; line-height:1.5; margin-bottom:24px;">Please log in to your engineer account to start designing custom hardware architectures, interactive schematics, and compiling C++ firmware.</p>
+          <div style="display:flex; flex-direction:column; gap:12px; width:100%;">
+            <button onclick="window.innovationHubAuth.openAuthModal('signin')" style="width:100%; padding:12px 16px; background:#3b82f6; color:#ffffff; font-weight:600; border-radius:12px; border:none; cursor:pointer; transition:background 0.15s ease;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
               Sign In to Your Account &rarr;
             </button>
-            <button onclick="window.innovationHubAuth.openAuthModal('register')" class="w-full py-3 px-4 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl border border-white/10 transition-all cursor-pointer" style="width:100%; padding:12px 16px; background:rgba(255,255,255,0.05); color:#ffffff; font-weight:500; border-radius:12px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">
+            <button onclick="window.innovationHubAuth.openAuthModal('register')" style="width:100%; padding:12px 16px; background:#1a1a1a; color:#ffffff; font-weight:500; border-radius:12px; border:1px solid #333333; cursor:pointer; transition:background 0.15s ease;" onmouseover="this.style.background='#242424'" onmouseout="this.style.background='#1a1a1a'">
               Create Free Account
             </button>
           </div>
-          <div class="mt-6 pt-4 border-t border-white/5 w-full flex justify-center" style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08); width:100%; display:flex; justify-content:center;">
-            <a href="/" class="text-xs text-gray-400 hover:text-white" style="font-size:12px; color:#94a3b8; text-decoration:none;">&larr; Return to Home</a>
+          <div style="margin-top:24px; padding-top:16px; border-top:1px solid #222222; width:100%; display:flex; justify-content:center;">
+            <a href="/" style="font-size:12px; color:#a0a0a0; text-decoration:none;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='#a0a0a0'">&larr; Return to Home</a>
           </div>
         </div>
       </div>
@@ -524,34 +521,39 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
   }
 
   modal.innerHTML = `
-    <!-- Main Full-Screen AI Hardware Studio Application Shell -->
-    <div class="google-ai-studio flex h-screen w-full bg-[#131314] text-[#e8eaed] overflow-hidden select-none" id="ai-studio-shell" style="display:flex; height:100vh; width:100%; background:#131314; color:#e8eaed; font-family:'Google Sans', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif; overflow:hidden; user-select:none;">
+    <!-- Main Full-Screen AI Hardware Studio Application Shell (ChatGPT / Gemini Style) -->
+    <div class="google-ai-studio flex h-screen w-full bg-[#0a0a0a] text-[#ffffff] overflow-hidden select-none" id="ai-studio-shell" style="display:flex; height:100vh; width:100%; background:#0a0a0a; color:#ffffff; font-family:'Google Sans', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif; overflow:hidden; user-select:none;">
       
       <!-- 1. Left Navigation Sidebar: Dedicated Project Labs + General Conversations -->
-      <aside class="w-64 h-full bg-[#131314] border-r border-[#282a2d] flex flex-col justify-between p-3 shrink-0" style="width:250px; min-width:250px; height:100%; background:#131314; border-right:1px solid #282a2d; display:flex; flex-direction:column; justify-content:space-between; padding:12px; box-sizing:border-box; flex-shrink:0;">
-        <div class="flex flex-col flex-1 min-h-0" style="display:flex; flex-direction:column; flex:1; min-height:0; gap:10px;">
-          <!-- Brand Logo: Sparkle icon + The Innovation Hub -->
-          <div class="flex items-center space-x-2.5 px-2 py-1 cursor-pointer" style="display:flex; align-items:center; gap:8px; padding:4px 8px; cursor:pointer;" onclick="window.omniLabStudio.createNewChat()">
-            <svg class="w-4 h-4 text-[#4285f4]" style="width:18px; height:18px; color:#4285f4; flex-shrink:0;" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
-            </svg>
+      <aside class="w-64 h-full bg-[#111111] border-r border-[#222222] flex flex-col justify-between p-3 shrink-0" style="width:260px; min-width:260px; height:100%; background:#111111; border-right:1px solid #222222; display:flex; flex-direction:column; justify-content:space-between; padding:12px; box-sizing:border-box; flex-shrink:0;">
+        <div class="flex flex-col flex-1 min-h-0" style="display:flex; flex-direction:column; flex:1; min-height:0; gap:12px;">
+          <!-- Clean Brand Logo Area -->
+          <div style="display:flex; align-items:center; gap:10px; padding:6px 8px; cursor:pointer;" onclick="window.omniLabStudio.createNewChat()">
+            <div style="width:30px; height:30px; border-radius:8px; background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.3); display:flex; align-items:center; justify-content:center; color:#60a5fa; flex-shrink:0;">
+              <span style="font-size:16px;">✦</span>
+            </div>
             <div style="display:flex; flex-direction:column; line-height:1.2;">
-              <span class="text-sm font-semibold tracking-normal text-white" style="font-size:14px; font-weight:600; color:#ffffff; line-height:1.2;">The Innovation Hub</span>
-              <span class="text-[10px] text-[#8ab4f8] font-mono uppercase tracking-wider" style="font-size:10px; color:#8ab4f8; letter-spacing:0.04em;">AI Hardware Studio</span>
+              <span style="font-size:14px; font-weight:600; color:#ffffff;">The Innovation Hub</span>
+              <span style="font-size:10px; color:#a0a0a0; font-weight:500; letter-spacing:0.04em;">AI Studio</span>
             </div>
           </div>
 
-          <!-- + New Engineering Chat Button -->
-          <button class="w-full flex items-center justify-center space-x-2 rounded-xl py-2.5 px-4 text-xs font-semibold transition-all cursor-pointer shadow-sm" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:#202124; border:1px solid #3c4043; color:#ffffff; border-radius:10px; padding:9px 14px; font-size:12px; font-weight:600; cursor:pointer;" onclick="window.omniLabStudio.createNewChat()">
-            <svg class="w-4 h-4 text-[#8ab4f8]" style="width:16px; height:16px; color:#8ab4f8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            <span>+ New Engineering Chat</span>
+          <!-- + New Chat Button -->
+          <button 
+            style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:#1a1a1a; border:1px solid #2e2e2e; color:#ffffff; border-radius:10px; padding:9px 14px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s ease;" 
+            onmouseover="this.style.background='#242424'; this.style.borderColor='#3b82f6';"
+            onmouseout="this.style.background='#1a1a1a'; this.style.borderColor='#2e2e2e';"
+            onclick="window.omniLabStudio.createNewChat()"
+          >
+            <span style="color:#60a5fa; font-size:15px; font-weight:bold; line-height:1;">+</span>
+            <span>New Chat</span>
           </button>
 
           <!-- Search Filter Input -->
-          <div class="px-1" style="padding:0 2px;">
-            <div class="flex items-center px-2.5 py-1.5 rounded-lg bg-[#1e1f20] border border-[#282a2d] focus-within:border-[#8ab4f8]/50 text-xs" style="display:flex; align-items:center; gap:6px; padding:4px 8px; border-radius:8px; background:#1e1f20; border:1px solid #282a2d;">
-              <svg class="w-3.5 h-3.5 text-[#5f6368]" style="width:12px; height:12px; color:#5f6368;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" placeholder="Search projects &amp; chats..." class="w-full bg-transparent border-0 outline-none text-[11px] text-white placeholder-[#5f6368]" style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:11px; color:#ffffff; padding:1px;" oninput="window.omniLabStudio.filterHistory(this.value)" />
+          <div style="padding:0 2px;">
+            <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; background:#161616; border:1px solid #262626;">
+              <svg style="width:13px; height:13px; color:#666666; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" placeholder="Search projects &amp; chats..." style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:11px; color:#ffffff; padding:0;" oninput="window.omniLabStudio.filterHistory(this.value)" />
             </div>
           </div>
 
@@ -562,236 +564,112 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
         </div>
 
         <!-- Sidebar Footer -->
-        <div class="pt-2 border-t border-[#282a2d] text-xs flex flex-col gap-1.5" style="border-top:1px solid #282a2d; padding-top:8px; display:flex; flex-direction:column; gap:6px; font-size:12px;">
-          <a href="/projects" class="flex items-center space-x-2.5 px-2.5 py-1.5 rounded-lg text-[#9aa0a6] hover:text-white hover:bg-[#202124] transition-colors" style="display:flex; align-items:center; gap:8px; padding:6px 8px; color:#9aa0a6; text-decoration:none; border-radius:6px;">
-            <svg class="w-4 h-4 text-[#8ab4f8]" style="width:15px; height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <div style="border-top:1px solid #222222; padding-top:10px; display:flex; flex-direction:column; gap:6px; font-size:12px;">
+          <a href="/projects" style="display:flex; align-items:center; gap:8px; padding:6px 10px; color:#a0a0a0; text-decoration:none; border-radius:6px; transition:all 0.15s ease;" onmouseover="this.style.color='#ffffff'; this.style.background='#1a1a1a';" onmouseout="this.style.color='#a0a0a0'; this.style.background='transparent';">
+            <svg style="width:14px; height:14px; color:#60a5fa;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             <span style="font-size:12px; font-weight:500;">Explore All Projects (12)</span>
           </a>
           
-          <div class="flex items-center justify-between px-2 pt-1" style="display:flex; align-items:center; justify-content:space-between; padding:2px 4px;">
-            <button class="flex items-center space-x-2 text-[#9aa0a6] hover:text-white text-xs bg-transparent border-0 cursor-pointer p-1" style="display:flex; align-items:center; gap:6px; color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:12px;" onclick="window.omniLabStudio.openSettingsModal()">
-              <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              <span>API Settings</span>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:2px 6px;">
+            <button style="display:flex; align-items:center; gap:6px; color:#a0a0a0; background:transparent !important; border:none; cursor:pointer; font-size:12px; padding:4px 0; transition:color 0.15s ease;" onmouseover="this.style.color='#ffffff';" onmouseout="this.style.color='#a0a0a0';" onclick="window.omniLabStudio.openSettingsModal()">
+              <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>Settings</span>
             </button>
-            <button class="text-[#9aa0a6] hover:text-white bg-transparent border-0 cursor-pointer p-1" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:14px;" onclick="window.omniLabStudio.toggleSidebar()" title="Collapse Sidebar">&lt;</button>
+            <button style="color:#666666; background:transparent !important; border:none; cursor:pointer; font-size:13px; padding:4px; transition:color 0.15s ease;" onmouseover="this.style.color='#ffffff';" onmouseout="this.style.color='#666666';" onclick="window.omniLabStudio.toggleSidebar()" title="Collapse Sidebar">&lt;</button>
           </div>
         </div>
       </aside>
 
-      <!-- 2. Central Main Workspace -->
-      <main class="flex-1 h-full flex flex-col bg-[#131314] overflow-hidden min-w-0" style="flex:1 1 0%; height:100%; display:flex; flex-direction:column; background:#131314; overflow:hidden; min-width:0;">
+      <!-- 2. Central Main Workspace (Full width, right sidebar removed!) -->
+      <main class="flex-1 h-full flex flex-col bg-[#0a0a0a] overflow-hidden min-w-0" style="flex:1 1 0%; height:100%; display:flex; flex-direction:column; background:#0a0a0a; overflow:hidden; min-width:0;">
         <!-- Top Workspace Bar Mount -->
         <div id="studio-workspace-header-mount">
           ${renderWorkspaceHeaderHTML()}
         </div>
 
-        <!-- Elevated Central Container Card (Google AI Studio canvas) -->
-        <div class="flex-1 p-3 overflow-hidden flex flex-col" style="flex:1 1 0%; padding:12px; overflow:hidden; display:flex; flex-direction:column;">
-          <div class="flex-1 bg-[#1e1f20] border border-[#282a2d] rounded-2xl flex flex-col justify-between overflow-hidden relative shadow-2xl" style="flex:1 1 0%; background:#1e1f20; border:1px solid #282a2d; border-radius:18px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; position:relative;">
+        <!-- Chat Stream Area (Spacious ChatGPT / Gemini style) -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar" id="ai-studio-chat-stream" style="flex:1 1 0%; overflow-y:auto; padding:24px 20px 10px 20px; display:flex; flex-direction:column; scroll-behavior:smooth;">
+          ${renderChatStreamHTML()}
+        </div>
+
+        <!-- Bottom Input Bar (ChatGPT-style auto-growing textarea) -->
+        <div style="width:100%; max-width:840px; margin:0 auto; padding:0 20px 20px 20px; box-sizing:border-box; flex-shrink:0;">
+          <div style="width:100%; background:#1a1a1a; border:1px solid #333333; border-radius:18px; padding:10px 12px 10px 16px; display:flex; align-items:flex-end; gap:10px; box-shadow:0 8px 30px rgba(0,0,0,0.5); transition:border-color 0.15s ease; box-sizing:border-box;">
+            <textarea
+              id="ai-studio-input"
+              rows="1"
+              placeholder="Ask about wiring, code, components, or anything hardware..."
+              style="width:100%; max-height:150px; min-height:24px; background:transparent !important; border:none !important; outline:none !important; font-size:14px; line-height:1.5; color:#ffffff; resize:none; padding:4px 0; font-family:inherit; box-sizing:border-box;"
+              onkeydown="window.omniLabStudio.handleInputKeydown(event)"
+              oninput="window.omniLabStudio.autoResizeTextarea(this); window.omniLabStudio.updateTokenCount();"
+            ></textarea>
             
-            <!-- Inner scrollable thread or empty state -->
-            <div class="flex-1 overflow-y-auto px-8 py-8 flex flex-col" id="ai-studio-chat-stream" style="flex:1 1 0%; overflow-y:auto; padding:28px 32px; display:flex; flex-direction:column;">
-              ${renderChatStreamHTML()}
-            </div>
-
-            <!-- Integrated Command Input Dock (Google AI Studio pill dock) -->
-            <div class="p-4 pt-1" style="padding:16px; padding-top:4px;">
-              <!-- Component injection chips -->
-              <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none text-xs" style="display:flex; align-items:center; gap:8px; overflow-x:auto; padding-bottom:8px; font-size:12px;">
-                <span class="text-[10px] text-[#9aa0a6] uppercase tracking-wider shrink-0 font-medium" style="font-size:10px; color:#9aa0a6; text-transform:uppercase; letter-spacing:0.06em; flex-shrink:0;">+ INJECT:</span>
-                <button class="px-2.5 py-0.5 rounded-full bg-[#282a2d] hover:bg-[#35373b] text-[#e8eaed] border border-white/5 cursor-pointer whitespace-nowrap text-[11px]" style="padding:2px 10px; border-radius:9999px; background:#282a2d; color:#e8eaed; border:1px solid rgba(255,255,255,0.06); cursor:pointer; white-space:nowrap; font-size:11px;" onclick="window.omniLabStudio.insertPill('ESP32 DevKit')">+ ESP32</button>
-                <button class="px-2.5 py-0.5 rounded-full bg-[#282a2d] hover:bg-[#35373b] text-[#e8eaed] border border-white/5 cursor-pointer whitespace-nowrap text-[11px]" style="padding:2px 10px; border-radius:9999px; background:#282a2d; color:#e8eaed; border:1px solid rgba(255,255,255,0.06); cursor:pointer; white-space:nowrap; font-size:11px;" onclick="window.omniLabStudio.insertPill('Arduino Uno R3')">+ Arduino</button>
-                <button class="px-2.5 py-0.5 rounded-full bg-[#282a2d] hover:bg-[#35373b] text-[#e8eaed] border border-white/5 cursor-pointer whitespace-nowrap text-[11px]" style="padding:2px 10px; border-radius:9999px; background:#282a2d; color:#e8eaed; border:1px solid rgba(255,255,255,0.06); cursor:pointer; white-space:nowrap; font-size:11px;" onclick="window.omniLabStudio.insertPill('0.96\" I2C OLED')">+ OLED</button>
-                <button class="px-2.5 py-0.5 rounded-full bg-[#282a2d] hover:bg-[#35373b] text-[#e8eaed] border border-white/5 cursor-pointer whitespace-nowrap text-[11px]" style="padding:2px 10px; border-radius:9999px; background:#282a2d; color:#e8eaed; border:1px solid rgba(255,255,255,0.06); cursor:pointer; white-space:nowrap; font-size:11px;" onclick="window.omniLabStudio.insertPill('SG90 Micro Servo')">+ Servo</button>
-                <button class="px-2.5 py-0.5 rounded-full bg-[#282a2d] hover:bg-[#35373b] text-[#e8eaed] border border-white/5 cursor-pointer whitespace-nowrap text-[11px]" style="padding:2px 10px; border-radius:9999px; background:#282a2d; color:#e8eaed; border:1px solid rgba(255,255,255,0.06); cursor:pointer; white-space:nowrap; font-size:11px;" onclick="window.omniLabStudio.insertPill('HC-SR04 Sonar')">+ Sonar</button>
-                <button class="px-2.5 py-0.5 rounded-full bg-[#282a2d] hover:bg-[#35373b] text-[#e8eaed] border border-white/5 cursor-pointer whitespace-nowrap text-[11px]" style="padding:2px 10px; border-radius:9999px; background:#282a2d; color:#e8eaed; border:1px solid rgba(255,255,255,0.06); cursor:pointer; white-space:nowrap; font-size:11px;" onclick="window.omniLabStudio.insertPill('5V Relay Module')">+ Relay</button>
-              </div>
-
-              <!-- Pill input bar with Run ⌘↵ -->
-              <div class="w-full bg-[#131314] border border-[#3c4043] focus-within:border-[#8ab4f8] rounded-full px-4 py-2 flex items-center justify-between transition-colors shadow-inner" style="width:100%; background:#131314; border:1px solid #3c4043; border-radius:9999px; padding:6px 14px; display:flex; align-items:center; justify-content:space-between; box-sizing:border-box;">
-                <div class="flex items-center space-x-3 flex-1 min-w-0 pr-2" style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; padding-right:8px;">
-                  <input 
-                    id="ai-studio-input"
-                    type="text" 
-                    class="w-full bg-transparent border-0 outline-none text-sm text-white placeholder-[#80868b]"
-                    style="width:100%; background:transparent !important; border:none !important; outline:none !important; font-size:14px !important; color:#ffffff !important; padding:4px 6px;"
-                    placeholder="Describe any Arduino Uno experiment, sensor system, or robotics build..."
-                    onkeydown="window.omniLabStudio.handleInputKeydown(event)"
-                    oninput="window.omniLabStudio.updateTokenCount()"
-                  />
-                </div>
-                
-                <div class="flex items-center space-x-2 shrink-0" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                  <button class="w-7 h-7 rounded-full hover:bg-[#282a2d] text-[#9aa0a6] hover:text-white flex items-center justify-center transition-colors bg-transparent border-0 cursor-pointer" style="width:28px; height:28px; border-radius:50%; color:#9aa0a6; display:flex; align-items:center; justify-content:center; background:transparent !important; border:none; cursor:pointer;" onclick="window.omniLabStudio.insertPill('Sensors & I2C OLED')" title="Add Component">
-                    <svg class="w-4 h-4" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                  </button>
-                  
-                  <!-- Run Button with Shortcut Badge -->
-                  <button 
-                    id="ai-studio-submit-btn"
-                    class="flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-[#282a2d] hover:bg-[#35373b] text-[#e8eaed] text-xs font-medium transition-colors border border-[#3c4043] cursor-pointer"
-                    style="display:flex; align-items:center; gap:6px; padding:6px 16px; border-radius:9999px; background:#282a2d; color:#e8eaed; font-size:12px; font-weight:500; border:1px solid #3c4043; cursor:pointer;"
-                    onclick="window.omniLabStudio.handleSend()"
-                    title="Run Synthesis (Ctrl+Enter)"
-                  >
-                    <span>Run</span>
-                    <span class="text-[10px] text-[#8ab4f8] font-mono" style="font-size:10px; color:#8ab4f8; font-family:monospace;">⌘↵</span>
-                  </button>
-                  
-                  <button class="w-7 h-7 rounded-full hover:bg-[#282a2d] text-[#9aa0a6] hover:text-white flex items-center justify-center transition-colors bg-transparent border-0 cursor-pointer" style="width:28px; height:28px; border-radius:50%; color:#9aa0a6; display:flex; align-items:center; justify-content:center; background:transparent !important; border:none; cursor:pointer;" onclick="window.omniLabStudio.clearInput()" title="Clear Input">
-                    <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <button
+              id="ai-studio-submit-btn"
+              onclick="window.omniLabStudio.handleSend()"
+              title="Send"
+              style="width:34px; height:34px; min-width:34px; border-radius:50%; background:#3b82f6; color:#ffffff; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s ease; flex-shrink:0; margin-bottom:1px;"
+              onmouseover="this.style.background='#2563eb';"
+              onmouseout="this.style.background='#3b82f6';"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5"></line>
+                <polyline points="5 12 12 5 19 12"></polyline>
+              </svg>
+            </button>
+          </div>
+          <div style="text-align:center; margin-top:8px; font-size:11px; color:#666666;">
+            The Innovation Hub AI Assistant &bull; ESP32 &amp; Arduino Hardware Engineering
           </div>
         </div>
       </main>
-
-      <!-- 3. Right Sidebar: "Run settings" -->
-      <aside class="w-64 h-full bg-[#131314] border-l border-[#282a2d] p-4 flex flex-col justify-between shrink-0 overflow-y-auto" id="studio-run-settings" style="width:260px; min-width:260px; height:100%; background:#131314; border-left:1px solid #282a2d; padding:16px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box; flex-shrink:0; overflow-y:auto;">
-        <div class="space-y-4" style="display:flex; flex-direction:column; gap:16px;">
-          <!-- Title + Reset Icon -->
-          <div class="flex items-center justify-between pb-1" style="display:flex; align-items:center; justify-content:space-between; padding-bottom:4px;">
-            <span class="text-sm font-medium text-white" style="font-size:14px; font-weight:500; color:#ffffff;">Run settings</span>
-            <button class="text-[#9aa0a6] hover:text-white bg-transparent border-0 cursor-pointer" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer;" onclick="window.omniLabStudio.clearInput()" title="Reset input">
-              <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-            </button>
-          </div>
-
-          <!-- Get Code Button (exact Google AI Studio style) -->
-          <button class="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-full border border-[#3c4043] hover:border-[#8ab4f8]/50 bg-transparent text-xs font-medium text-[#8ab4f8] transition-colors cursor-pointer" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:7px 12px; border-radius:9999px; border:1px solid #3c4043; background:transparent; color:#8ab4f8; font-size:12px; font-weight:500; cursor:pointer;" onclick="window.omniLabStudio.copyLatestCode()">
-            <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            <span>&lt; &gt; Get code</span>
-          </button>
-
-          <!-- Model Setting -->
-          <div class="space-y-1.5" style="display:flex; flex-direction:column; gap:6px;">
-            <div class="flex items-center space-x-1.5 text-xs text-[#9aa0a6]" style="display:flex; align-items:center; gap:6px; font-size:12px; color:#9aa0a6;">
-              <span class="text-[#8ab4f8] font-bold">+</span>
-              <span class="font-medium text-white">Model</span>
-            </div>
-            <select class="w-full bg-[#1e1f20] border border-[#3c4043] rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer" style="width:100%; background:#1e1f20; border:1px solid #3c4043; border-radius:8px; padding:8px 12px; font-size:12px; color:#ffffff; outline:none; cursor:pointer;" onchange="window.omniLabStudio.switchModel(this.value)">
-              <option value="gemini-2.0-flash" selected>Gemini 2.0 Flash Experimental</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-              <option value="llama-3.3-70b">Llama 3.3 70B (Groq)</option>
-            </select>
-          </div>
-
-          <!-- Output format Setting -->
-          <div class="space-y-1.5" style="display:flex; flex-direction:column; gap:6px;">
-            <div class="flex items-center justify-between text-xs" style="display:flex; align-items:center; justify-content:space-between; font-size:12px;">
-              <span class="text-[#9aa0a6]">Output format</span>
-              <span class="text-[9px] bg-[#1a73e8] text-white px-1.5 py-0.2 rounded font-semibold uppercase" style="font-size:9px; background:#1a73e8; color:#ffffff; padding:1px 5px; border-radius:3px; font-weight:600;">NEW</span>
-            </div>
-            <select class="w-full bg-[#1e1f20] border border-[#3c4043] rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer" style="width:100%; background:#1e1f20; border:1px solid #3c4043; border-radius:8px; padding:8px 12px; font-size:12px; color:#ffffff; outline:none; cursor:pointer;">
-              <option selected>Interactive Circuit, CAD & Code</option>
-              <option>C++ Firmware Only</option>
-              <option>Wiring Netlist & Pinout</option>
-            </select>
-          </div>
-
-          <!-- Token Count Setting -->
-          <div class="space-y-1.5" style="display:flex; flex-direction:column; gap:6px;">
-            <div class="flex items-center space-x-1.5 text-xs text-[#9aa0a6]" style="display:flex; align-items:center; gap:6px; font-size:12px; color:#9aa0a6;">
-              <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-              <span>Token count</span>
-            </div>
-            <div class="text-xs text-[#9aa0a6] bg-[#1e1f20] border border-[#3c4043] rounded-lg px-3 py-2 flex items-center justify-between" style="background:#1e1f20; border:1px solid #3c4043; border-radius:8px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; font-size:12px;">
-              <span id="studio-token-count" style="color:#ffffff; font-weight:500;">0</span>
-              <span class="text-[#5f6368]" style="color:#5f6368;">/ 32,768</span>
-            </div>
-          </div>
-
-          <!-- Temperature Slider -->
-          <div class="space-y-2" style="display:flex; flex-direction:column; gap:8px;">
-            <div class="flex items-center justify-between text-xs" style="display:flex; align-items:center; justify-content:space-between; font-size:12px;">
-              <div class="flex items-center space-x-1.5 text-[#9aa0a6]" style="display:flex; align-items:center; gap:6px; color:#9aa0a6;">
-                <svg class="w-3.5 h-3.5" style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
-                <span>Temperature</span>
-              </div>
-              <span class="px-2 py-0.5 rounded bg-[#1e1f20] border border-[#3c4043] text-xs font-mono text-white" id="temp-val-display" style="padding:2px 8px; border-radius:4px; background:#1e1f20; border:1px solid #3c4043; font-size:11px; color:#ffffff; font-family:monospace;">0.8</span>
-            </div>
-            <input 
-              type="range" 
-              min="0" 
-              max="2" 
-              step="0.1" 
-              value="0.8" 
-              class="w-full accent-[#8ab4f8] cursor-pointer"
-              style="width:100%; accent-color:#8ab4f8; cursor:pointer;"
-              oninput="const d = document.getElementById('temp-val-display'); if(d) d.textContent = this.value;"
-            />
-          </div>
-
-          <!-- Advanced Settings Accordion -->
-          <div class="pt-2 border-t border-[#282a2d]" style="border-top:1px solid #282a2d; padding-top:8px;">
-            <details class="text-xs text-[#9aa0a6] cursor-pointer" style="font-size:12px; color:#9aa0a6; cursor:pointer;">
-              <summary class="flex items-center justify-between py-1 text-white font-medium hover:text-[#8ab4f8] transition-colors" style="display:flex; align-items:center; justify-content:space-between; padding:4px 0; color:#ffffff; font-weight:500;">
-                <span>Advanced settings</span>
-              </summary>
-              <div class="pt-2 space-y-2 text-[11px]" style="padding-top:8px; display:flex; flex-direction:column; gap:8px; font-size:11px;">
-                <div>
-                  <span class="text-[#9aa0a6]">Target Architecture:</span>
-                  <button class="w-full mt-1 px-2.5 py-1.5 rounded bg-[#1e1f20] border border-[#3c4043] text-white text-left flex items-center justify-between cursor-pointer" style="width:100%; margin-top:4px; padding:6px 10px; border-radius:4px; background:#1e1f20; border:1px solid #3c4043; color:#ffffff; display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="window.omniLabStudio.toggleTargetBoard()">
-                    <span id="adv-target-board-text">${currentTargetBoard}</span>
-                    <span class="text-[#8ab4f8]">Toggle ⇄</span>
-                  </button>
-                </div>
-                <div>
-                  <span class="text-[#9aa0a6]">Hardware Netlist Verification:</span>
-                  <div class="text-[#10b981] mt-0.5" style="color:#10b981; margin-top:2px;">Pinout collision guard: ACTIVE</div>
-                </div>
-              </div>
-            </details>
-          </div>
-        </div>
-
-        <!-- Bottom collapse arrow -->
-        <div class="flex justify-end pt-3 border-t border-[#282a2d]" style="display:flex; justify-content:flex-end; padding-top:8px; border-top:1px solid #282a2d;">
-          <button class="text-[#9aa0a6] hover:text-white bg-transparent border-0 cursor-pointer p-1" style="color:#9aa0a6; background:transparent !important; border:none; cursor:pointer; font-size:14px;" onclick="const s = document.getElementById('studio-run-settings'); if(s) s.style.display = s.style.display==='none' ? 'flex' : 'none';" title="Collapse Run Settings">&gt;</button>
-        </div>
-      </aside>
     </div>
 
-    <!-- Move to Folder Picker Modal (Antigravity Architecture Management) -->
-    <div id="ai-studio-folder-picker" class="studio-folder-picker-overlay" style="display:none;" onclick="if(event.target===this) window.omniLabStudio.closeFolderPicker()">
-      <div class="studio-folder-picker-card">
-        <div class="flex items-center justify-between pb-3 border-b border-[#282a2d]" style="display:flex; align-items:center; justify-content:space-between; padding-bottom:10px; border-bottom:1px solid #282a2d;">
-          <h3 class="text-sm font-semibold text-white" style="font-size:14px; font-weight:600; color:#ffffff; margin:0;">Move Architecture to Folder</h3>
-          <button class="text-[#9aa0a6] hover:text-white bg-transparent border-0 cursor-pointer text-lg leading-none" style="color:#9aa0a6; background:transparent; border:none; cursor:pointer; font-size:18px;" onclick="window.omniLabStudio.closeFolderPicker()">&times;</button>
+    <!-- Move to Folder Picker Modal (Clean Dark Mode) -->
+    <div id="ai-studio-folder-picker" class="studio-folder-picker-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:99999; align-items:center; justify-content:center;" onclick="if(event.target===this) window.omniLabStudio.closeFolderPicker()">
+      <div style="max-width:440px; width:100%; background:#111111; border:1px solid #222222; border-radius:16px; padding:20px; box-shadow:0 20px 40px rgba(0,0,0,0.8); box-sizing:border-box;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom:12px; border-bottom:1px solid #222222;">
+          <h3 style="font-size:14px; font-weight:600; color:#ffffff; margin:0;">Move Architecture to Folder</h3>
+          <button style="color:#a0a0a0; background:transparent; border:none; cursor:pointer; font-size:18px; padding:2px;" onclick="window.omniLabStudio.closeFolderPicker()">&times;</button>
         </div>
-        <div class="py-3 space-y-1.5 max-h-56 overflow-y-auto" id="folder-picker-options" style="padding:12px 0; display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;">
+        <div style="padding:12px 0; display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;" id="folder-picker-options">
           <!-- Populated dynamically -->
         </div>
-        <div class="pt-3 border-t border-[#282a2d] flex justify-between items-center" style="padding-top:10px; border-top:1px solid #282a2d; display:flex; justify-content:space-between; align-items:center;">
-          <button class="text-xs text-[#00f2fe] hover:underline bg-transparent border-0 cursor-pointer" style="font-size:12px; color:#00f2fe; background:transparent; border:none; cursor:pointer;" onclick="window.omniLabStudio.createFolderPrompt()">+ Create New Folder</button>
-          <button class="px-3 py-1 text-xs rounded bg-[#282a2d] hover:bg-[#35373b] text-white border-0 cursor-pointer" style="padding:4px 12px; font-size:12px; border-radius:4px; background:#282a2d; color:#ffffff; border:none; cursor:pointer;" onclick="window.omniLabStudio.closeFolderPicker()">Cancel</button>
+        <div style="padding-top:12px; border-top:1px solid #222222; display:flex; justify-content:space-between; align-items:center;">
+          <button style="font-size:12px; color:#60a5fa; background:transparent; border:none; cursor:pointer;" onclick="window.omniLabStudio.createFolderPrompt()">+ Create New Folder</button>
+          <button style="padding:6px 14px; font-size:12px; border-radius:6px; background:#1a1a1a; color:#ffffff; border:1px solid #333333; cursor:pointer;" onclick="window.omniLabStudio.closeFolderPicker()">Cancel</button>
         </div>
       </div>
     </div>
 
-    <!-- API Key Settings Drawer Modal -->
-    <div id="ai-settings-drawer" class="ai-settings-drawer" style="display:none;">
-      <div class="ai-settings-card">
-        <div class="ai-settings-header">
-          <h3>AI Engine &amp; API Key Configuration</h3>
-          <button class="modal-close-btn" onclick="window.omniLabStudio.closeSettingsModal()">&times;</button>
+    <!-- API Key & Model Settings Modal -->
+    <div id="ai-settings-drawer" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:99999; align-items:center; justify-content:center;" onclick="if(event.target===this) window.omniLabStudio.closeSettingsModal()">
+      <div style="max-width:460px; width:100%; background:#111111; border:1px solid #222222; border-radius:16px; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.8); box-sizing:border-box;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid #222222;">
+          <h3 style="margin:0; font-size:16px; font-weight:600; color:#ffffff; display:flex; align-items:center; gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>AI Studio Settings</span>
+          </h3>
+          <button style="background:transparent; border:none; color:#666666; font-size:20px; cursor:pointer; padding:2px;" onclick="window.omniLabStudio.closeSettingsModal()">&times;</button>
         </div>
-        <div class="ai-settings-body">
-          <label class="setting-label">Active Provider</label>
-          <select id="setting-provider-select" class="premium-select" style="margin-bottom:14px;">
-            <option value="auto">Antigravity Auto Hardware Synthesis (Offline Ready)</option>
-            <option value="groq">Groq Cloud (Llama 3.3 70B)</option>
-            <option value="gemini">Google Gemini 1.5 Pro</option>
-            <option value="openrouter">OpenRouter (Multi-Model)</option>
-          </select>
-          <label class="setting-label">Custom API Key (Optional)</label>
-          <input type="password" id="setting-key-input" class="premium-input" placeholder="gsk_... or AIzaSy... (leave blank for built-in synthesis)" style="margin-bottom:16px;">
-          <div style="display:flex; justify-content:flex-end; gap:8px;">
-            <button class="btn-cancel" onclick="window.omniLabStudio.closeSettingsModal()">Cancel</button>
-            <button class="btn-save" onclick="window.omniLabStudio.saveSettings()">Save Configuration</button>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <label style="display:block; font-size:12px; font-weight:500; color:#a0a0a0; margin-bottom:6px;">Active AI Model / Provider</label>
+            <select id="setting-provider-select" style="width:100%; background:#1a1a1a; border:1px solid #333333; border-radius:8px; padding:10px 12px; color:#ffffff; font-size:13px; outline:none; cursor:pointer;">
+              <option value="auto">Antigravity Auto Hardware Synthesis (Offline Ready)</option>
+              <option value="gemini">Google Gemini (Flash / Pro)</option>
+              <option value="groq">Groq Cloud (Llama 3.3 70B)</option>
+              <option value="openrouter">OpenRouter (Multi-Model)</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size:12px; font-weight:500; color:#a0a0a0; margin-bottom:6px;">Custom API Key (Optional)</label>
+            <input type="password" id="setting-key-input" placeholder="gsk_... or AIzaSy... (leave blank for default)" style="width:100%; background:#1a1a1a; border:1px solid #333333; border-radius:8px; padding:10px 12px; color:#ffffff; font-size:13px; outline:none; box-sizing:border-box;">
+            <p style="font-size:11px; color:#666666; margin:6px 0 0 0;">Stored securely in local browser storage only.</p>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+            <button style="padding:8px 16px; border-radius:8px; background:#1a1a1a; border:1px solid #333333; color:#a0a0a0; font-size:13px; cursor:pointer;" onclick="window.omniLabStudio.closeSettingsModal()">Cancel</button>
+            <button style="padding:8px 18px; border-radius:8px; background:#3b82f6; border:none; color:#ffffff; font-size:13px; font-weight:500; cursor:pointer;" onclick="window.omniLabStudio.saveSettings()">Save Configuration</button>
           </div>
         </div>
       </div>
@@ -800,7 +678,7 @@ export function renderAIStudioModal(containerId = 'ai-architect-modal'): void {
 
   // Focus input
   setTimeout(() => {
-    const input = document.getElementById('ai-studio-input') as HTMLInputElement | null;
+    const input = document.getElementById('ai-studio-input') as HTMLTextAreaElement | null;
     input?.focus();
   }, 100);
 }
@@ -943,57 +821,60 @@ function renderChatStreamHTML(): string {
 
   if (msgs.length === 0) {
     return `
-      <div class="w-full flex-1 flex flex-col items-center justify-center text-center my-auto py-8" style="width:100%; flex:1 1 0%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; margin:auto 0; padding:32px 0;">
-        <h1 class="text-4xl font-normal text-white mb-2 tracking-tight" style="font-size:36px; font-weight:400; color:#ffffff; letter-spacing:-0.02em; margin:0 0 8px 0; font-family:'Google Sans', sans-serif;">What will you build?</h1>
-        <p class="text-sm text-[#9aa0a6] max-w-lg mb-8 font-normal" style="font-size:13px; color:#9aa0a6; max-width:560px; margin:0 auto 32px auto; line-height:1.5;">
-          Push Gemini to the limits of what AI can do using the Gemini API
+      <div class="w-full flex-1 flex flex-col items-center justify-center text-center my-auto py-10" style="width:100%; flex:1 1 0%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; margin:auto 0; padding:40px 16px;">
+        <!-- Animated Sparkle Icon -->
+        <div style="width:52px; height:52px; border-radius:16px; background:rgba(59, 130, 246, 0.1); border:1px solid rgba(59, 130, 246, 0.25); display:flex; align-items:center; justify-content:center; margin-bottom:18px; color:#60a5fa;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
+          </svg>
+        </div>
+
+        <h1 style="font-size:30px; font-weight:600; color:#ffffff; letter-spacing:-0.02em; margin:0 0 6px 0; font-family:'Google Sans', sans-serif;">The Innovation Hub</h1>
+        <p style="font-size:14px; color:#a0a0a0; max-width:520px; margin:0 auto 28px auto; line-height:1.5;">
+          AI Hardware Engineering Assistant • Ask about circuits, pinouts, C++ firmware, or troubleshoot hardware issues.
         </p>
 
-        <!-- 3 Google AI Studio Starter Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:16px; width:100%; max-width:820px;">
+        <!-- 4 Hardware Engineering Suggestion Cards (2x2 Grid) -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; width:100%; max-width:680px; text-align:left;">
           
-          <!-- Card 1: Image Editing -->
-          <div class="studio-starter-card bg-[#282a2d] hover:bg-[#35373b] p-6 rounded-xl text-left cursor-pointer transition-all duration-150 flex flex-col justify-between border border-transparent hover:border-[#8ab4f8]/40" style="background:#282a2d; padding:22px; border-radius:12px; text-align:left; cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; transition:all 0.15s ease;" onclick="window.omniLabStudio.selectStarter('ESP32 Emotion Desk Robot with 0.96 inch I2C OLED display, dual SG90 pan-tilt servos, and HC-SR04 sonar distance sensor', true)">
-            <div class="text-[#8ab4f8] mb-4" style="color:#8ab4f8; margin-bottom:16px;">
-              <svg class="w-7 h-7" style="width:28px; height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-base font-semibold text-white mb-1.5" style="font-size:15px; font-weight:600; color:#ffffff; margin:0 0 6px 0;">Image Editing</h3>
-              <p class="text-xs text-[#9aa0a6] leading-relaxed" style="font-size:12px; color:#9aa0a6; margin:0; line-height:1.45;">Edit an image of croissants &amp; robot actuators.</p>
-            </div>
+          <!-- Card 1: ESP32 Pinout -->
+          <div 
+            style="background:#18181b; hover:background:#27272a; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
+            onclick="window.omniLabStudio.selectStarter('Explain the ESP32 GPIO pinout, 3.3V logic levels, and which pins to avoid for analog reads', true)"
+          >
+            <div style="font-size:18px; margin-bottom:8px;">🔌</div>
+            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Explain ESP32 GPIO Pinout</div>
+            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Pins to avoid, ADC2 Wi-Fi conflict, and 3.3V logic constraints.</div>
           </div>
 
-          <!-- Card 2: Visual Story -->
-          <div class="studio-starter-card bg-[#282a2d] hover:bg-[#35373b] p-6 rounded-xl text-left cursor-pointer transition-all duration-150 flex flex-col justify-between border border-transparent hover:border-[#8ab4f8]/40" style="background:#282a2d; padding:22px; border-radius:12px; text-align:left; cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; transition:all 0.15s ease;" onclick="window.omniLabStudio.selectStarter('Autonomous Smart Greenhouse with capacitive soil probe, 5V relay water pump, DHT22 climate sensor, and 16x2 I2C LCD', true)">
-            <div class="text-[#8ab4f8] mb-4" style="color:#8ab4f8; margin-bottom:16px;">
-              <svg class="w-7 h-7" style="width:28px; height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                <line x1="9" y1="10" x2="15" y2="10"></line>
-                <line x1="12" y1="7" x2="12" y2="13"></line>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-base font-semibold text-white mb-1.5" style="font-size:15px; font-weight:600; color:#ffffff; margin:0 0 6px 0;">Visual Story</h3>
-              <p class="text-xs text-[#9aa0a6] leading-relaxed" style="font-size:12px; color:#9aa0a6; margin:0; line-height:1.45;">Generate a story with sensor images &amp; telemetry.</p>
-            </div>
+          <!-- Card 2: Servo Sweep -->
+          <div 
+            style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
+            onclick="window.omniLabStudio.selectStarter('Write an Arduino C++ sketch to sweep an SG90 servo from 0 to 180 degrees using non-blocking millis()', true)"
+          >
+            <div style="font-size:18px; margin-bottom:8px;">💻</div>
+            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Write Servo Sweep Sketch</div>
+            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Non-blocking C++ code for SG90 servo with smooth motion.</div>
           </div>
 
-          <!-- Card 3: Birthday Card -->
-          <div class="studio-starter-card bg-[#282a2d] hover:bg-[#35373b] p-6 rounded-xl text-left cursor-pointer transition-all duration-150 flex flex-col justify-between border border-transparent hover:border-[#8ab4f8]/40" style="background:#282a2d; padding:22px; border-radius:12px; text-align:left; cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; transition:all 0.15s ease;" onclick="window.omniLabStudio.selectStarter('Ultrasonic radar distance scanner with SG90 continuous sweep servo, HC-SR04 sonar, and piezo alert buzzer', true)">
-            <div class="text-[#8ab4f8] mb-4" style="color:#8ab4f8; margin-bottom:16px;">
-              <svg class="w-7 h-7" style="width:28px; height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-base font-semibold text-white mb-1.5" style="font-size:15px; font-weight:600; color:#ffffff; margin:0 0 6px 0;">Birthday Card</h3>
-              <p class="text-xs text-[#9aa0a6] leading-relaxed" style="font-size:12px; color:#9aa0a6; margin:0; line-height:1.45;">Design a custom birthday card or radar scanner.</p>
-            </div>
+          <!-- Card 3: MCU Comparison -->
+          <div 
+            style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
+            onclick="window.omniLabStudio.selectStarter('What is the difference between ESP32 and Arduino Uno for beginner robotics?', true)"
+          >
+            <div style="font-size:18px; margin-bottom:8px;">⚡</div>
+            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">ESP32 vs. Arduino Uno</div>
+            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Compare clock speeds, 5V vs 3.3V, memory, and Wi-Fi features.</div>
+          </div>
+
+          <!-- Card 4: I2C OLED Debugging -->
+          <div 
+            style="background:#18181b; border:1px solid #27272a; border-radius:12px; padding:16px; cursor:pointer; transition:all 0.15s ease;"
+            onclick="window.omniLabStudio.selectStarter('Why is my 0.96 inch I2C OLED display showing a blank black screen? How do I troubleshoot it?', true)"
+          >
+            <div style="font-size:18px; margin-bottom:8px;">🛠️</div>
+            <div style="font-size:13px; font-weight:600; color:#ffffff; margin-bottom:4px;">Debug I2C OLED Display</div>
+            <div style="font-size:12px; color:#a0a0a0; line-height:1.4;">Fix black screens, I2C address scanning, and pull-up resistors.</div>
           </div>
 
         </div>
@@ -1003,21 +884,26 @@ function renderChatStreamHTML(): string {
 
   // Render Conversational Thread
   return `
-    <div class="w-full max-w-4xl mx-auto flex flex-col space-y-6 pt-4">
+    <div class="w-full max-w-3xl mx-auto flex flex-col space-y-6 pt-4" style="width:100%; max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:20px; padding-top:16px;">
       ${msgs.map(msg => renderSingleMessageHTML(msg)).join('')}
     </div>
   `;
 }
 
 function renderSingleMessageHTML(msg: StudioMessage): string {
+  const currentUser = authService.getCurrentUser();
+  const userInitial = currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
+  const userTitle = currentUser ? currentUser.name : 'You';
+
   if (msg.role === 'user') {
     return `
-      <div class="chat-row user-row">
-        <div class="chat-bubble user-bubble">
-          <p class="bubble-text">${escapeHtml(msg.content)}</p>
-          <span class="bubble-timestamp">${msg.timestamp}</span>
+      <div class="chat-row user-row" style="display:flex; justify-content:flex-end; align-items:flex-start; gap:10px; margin:6px 0;">
+        <div class="chat-bubble user-bubble" style="background:#1e3a5f; color:#ffffff; border:1px solid rgba(59, 130, 246, 0.3); border-radius:18px 18px 4px 18px; padding:12px 18px; max-width:80%; font-size:14px; line-height:1.55; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+          <div style="white-space:pre-wrap; word-break:break-word;">${escapeHtml(msg.content)}</div>
         </div>
-        <img src="assets/arhanraaj-pfp.jpg" alt="You" class="chat-avatar user-avatar" />
+        <div style="width:32px; height:32px; border-radius:50%; background:#2563eb; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; box-shadow:0 2px 6px rgba(37,99,235,0.4);" title="${userTitle}">
+          ${userInitial}
+        </div>
       </div>
     `;
   }
@@ -1026,19 +912,17 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
   if (msg.isStreaming) {
     if (msg.isChatThinking) {
       return `
-        <div class="chat-row assistant-row">
-          <div class="chat-avatar assistant-avatar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
+        <div class="chat-row assistant-row" style="display:flex; justify-content:flex-start; align-items:flex-start; gap:12px; margin:8px 0;">
+          <div style="width:32px; height:32px; border-radius:50%; background:#1e293b; color:#60a5fa; border:1px solid rgba(96,165,250,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
             </svg>
           </div>
-          <div class="chat-bubble assistant-bubble">
-            <div class="chat-thinking-badge">
-              <span class="thinking-spinner">✦</span>
-              <span>${escapeHtml(msg.synthesisStatus || 'Consulting Hardware Engineering Knowledge Base...')}</span>
-              <span style="font-size: 0.78rem; color: #6B7280; margin-left: 8px;">⏱ ${msg.thoughtDuration || '0.4s'}</span>
+          <div class="chat-bubble assistant-bubble" style="background:#18181b; border:1px solid #27272a; border-radius:18px 18px 18px 4px; padding:12px 18px; font-size:13px; color:#a0a0a0;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="thinking-spinner" style="color:#60a5fa;">✦</span>
+              <span>${escapeHtml(msg.synthesisStatus || 'Consulting hardware engineering knowledge base...')}</span>
+              <span id="synthesis-timer-${msg.id}" style="font-size:11px; color:#6b7280; margin-left:6px;">⏱ ${msg.thoughtDuration || '0.4s'}</span>
             </div>
           </div>
         </div>
@@ -1050,12 +934,10 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
     const timerText = msg.thoughtDuration || '0.4s';
 
     return `
-      <div class="chat-row assistant-row">
-        <div class="chat-avatar assistant-avatar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
+      <div class="chat-row assistant-row" style="display:flex; justify-content:flex-start; align-items:flex-start; gap:12px; margin:8px 0;">
+        <div style="width:32px; height:32px; border-radius:50%; background:#1e293b; color:#60a5fa; border:1px solid rgba(96,165,250,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
           </svg>
         </div>
 
@@ -1101,16 +983,14 @@ function renderSingleMessageHTML(msg: StudioMessage): string {
 
   // Assistant Response: COMPLETED SYNTHESIS OR CHAT
   return `
-    <div class="chat-row assistant-row">
-      <div class="chat-avatar assistant-avatar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-          <polyline points="2 17 12 22 22 17"></polyline>
-          <polyline points="2 12 12 17 22 12"></polyline>
+    <div class="chat-row assistant-row" style="display:flex; justify-content:flex-start; align-items:flex-start; gap:12px; margin:8px 0;">
+      <div style="width:32px; height:32px; border-radius:50%; background:#1e293b; color:#60a5fa; border:1px solid rgba(96,165,250,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/>
         </svg>
       </div>
 
-      <div class="chat-bubble assistant-bubble">
+      <div class="chat-bubble assistant-bubble" style="flex:1; min-width:0; background:transparent; padding:0; border:none;">
         <!-- Antigravity Reasoning Accordion (Extended Thinking) -->
         ${msg.reasoningSteps && msg.reasoningSteps.length > 0 ? `
           <div class="ai-thought-accordion" id="thought-${msg.id}">
@@ -1677,18 +1557,22 @@ export function registerOmniLabStudioGlobals(
     },
 
     clearInput: () => {
-      const input = document.getElementById('ai-studio-input') as HTMLInputElement | null;
+      const input = document.getElementById('ai-studio-input') as HTMLTextAreaElement | HTMLInputElement | null;
       if (input) {
         input.value = '';
+        input.style.height = 'auto';
         input.focus();
         window.omniLabStudio.updateTokenCount();
       }
     },
 
     selectStarter: (prompt: string, autoRun = false) => {
-      const input = document.getElementById('ai-studio-input') as HTMLInputElement | null;
+      const input = document.getElementById('ai-studio-input') as HTMLTextAreaElement | HTMLInputElement | null;
       if (input) {
         input.value = prompt;
+        if (input instanceof HTMLTextAreaElement) {
+          window.omniLabStudio.autoResizeTextarea(input);
+        }
         input.focus();
         window.omniLabStudio.updateTokenCount();
       }
@@ -1698,17 +1582,20 @@ export function registerOmniLabStudioGlobals(
     },
 
     insertPill: (pillText: string) => {
-      const input = document.getElementById('ai-studio-input') as HTMLInputElement | null;
+      const input = document.getElementById('ai-studio-input') as HTMLTextAreaElement | HTMLInputElement | null;
       if (input) {
         const val = input.value.trim();
         input.value = val ? `${val}, with ${pillText}` : `Build a project using ${pillText}`;
+        if (input instanceof HTMLTextAreaElement) {
+          window.omniLabStudio.autoResizeTextarea(input);
+        }
         input.focus();
         window.omniLabStudio.updateTokenCount();
       }
     },
 
     updateTokenCount: () => {
-      const input = document.getElementById('ai-studio-input') as HTMLInputElement | null;
+      const input = document.getElementById('ai-studio-input') as HTMLTextAreaElement | HTMLInputElement | null;
       const tokenEl = document.getElementById('studio-token-count');
       if (tokenEl && input) {
         const tokens = Math.max(0, Math.ceil(input.value.length / 4));
